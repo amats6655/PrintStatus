@@ -10,8 +10,8 @@ namespace PrintStatus.DOM.Interfaces
 		Task<BasePrinter> GetIdBySerialNumberAsync(string serialNumber);
 		Task<bool> DeleteAsync(BasePrinter printer);
 		Task<BasePrinter> UpdateAsync(BasePrinter printer);
-		Task<IEnumerable<BasePrinter>> GetAllByModelAsync(int modelId);
-		Task<IEnumerable<BasePrinter>> GetAllByUserAsync(int userId);
-		Task<IEnumerable<BasePrinter>> GetAllByLocationAsync(int locationId);
+		Task<IEnumerable<BasePrinter>> GetAllByModelAsync(int modelId, string identityUserId);
+		Task<IEnumerable<BasePrinter>> GetAllByUserAsync(string identityUserId);
+		Task<IEnumerable<BasePrinter>> GetAllByLocationAsync(int locationId, string identityUserId);
 	}
 }
