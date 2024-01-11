@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Identity;
 using PrintStatus.BLL;
 using PrintStatus.BLL.Helpers;
 using PrintStatus.BLL.Interfaces;
 using PrintStatus.BLL.Services;
+using PrintStatus.DAL.Connection;
 using PrintStatus.DAL.Repositories;
 using PrintStatus.DOM.Interfaces;
+using PrintStatus.DOM.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+								.AddEntityFrameworkStores<ApplicationDbContext>()
+								.AddDefaultTokenProviders();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.ConfigureDALServices(connectionString);
@@ -32,8 +38,8 @@ builder.Services.AddScoped<IPrintModelManagementService, PrintModelManagementSer
 builder.Services.AddScoped<IPrintModelRepository, PrintModelRepository>();
 builder.Services.AddScoped<ISnmpService, SnmpService>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
-// builder.Services.AddScoped<AccountService>();
-// builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 
 var app = builder.Build();
