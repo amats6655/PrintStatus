@@ -46,7 +46,7 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-        public async Task<IEnumerable<BasePrinter>> GetAllAsync()
+		public async Task<IEnumerable<BasePrinter>> GetAllAsync()
 		{
 			try
 			{
@@ -60,12 +60,15 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllByLocationAsync(int locationId)
+		public async Task<IEnumerable<BasePrinter>> GetAllByLocationAsync(int locationId, string identityUserId)
 		{
 			try
 			{
 				return await _context.BasePrinters
-								.Where(p => p.LocationId == locationId)
+								.Include(p => p.PrintModel)
+								.Include(p => p.Location)
+								.Where(p => p.LocationId == locationId && p.UserProfiles
+									.Any(u => u.IdentityId == identityUserId))
 								.ToListAsync();
 			}
 			catch (Exception ex)
@@ -76,13 +79,17 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllByModelAsync(int modelId)
+		public async Task<IEnumerable<BasePrinter>> GetAllByModelAsync(int modelId, string identityUserId)
 		{
 			try
 			{
 				return await _context.BasePrinters
-								.Where(p => p.PrintModelId == modelId)
+								.Include(p => p.PrintModel)
+								.Include(p => p.Location)
+								.Where(p => p.PrintModelId == modelId && p.UserProfiles
+									.Any(u => u.IdentityId == identityUserId))
 								.ToListAsync();
+
 			}
 			catch (Exception ex)
 			{
@@ -92,13 +99,16 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllByUserAsync(int userId)
+		public async Task<IEnumerable<BasePrinter>> GetAllByUserAsync(string identityUserId)
 		{
+			
 			try
 			{
 				return await _context.BasePrinters
+								.Include(p => p.PrintModel)
+								.Include(p => p.Location)
 								.Where(p => p.UserProfiles
-								.Any(u => u.Id == userId))
+									.Any(u => u.IdentityId == identityUserId))
 								.ToListAsync();
 			}
 			catch (Exception ex)
@@ -129,8 +139,10 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				return await _context.BasePrinters
+								.Include(p => p.PrintModel)
+								.Include(p => p.Location)
 								.Where(p => p.SerialNumber
-								.Equals(serialNumber))
+									.Equals(serialNumber))
 								.FirstOrDefaultAsync();
 			}
 			catch (Exception ex)
