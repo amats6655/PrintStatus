@@ -18,6 +18,9 @@ appsettings.Production.json
 appsettings.*.json
 *.config
 
+# Файлы миграции базы данных
+[Mm]igrations/
+
 # Сгенерированные файлы для публикации
 publish/
 
