@@ -3,7 +3,7 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL;
 
-public class AccountService
+public class AccountService : IAccountService
 {
 	private readonly UserManager<IdentityUser> _userManager;
 	private readonly SignInManager<IdentityUser> _signInManager;

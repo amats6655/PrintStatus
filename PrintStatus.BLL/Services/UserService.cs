@@ -1,18 +1,30 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Query;
+using PrintStatus.DOM.Interfaces;
 using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL;
 
-public class UserService
+public class UserService : IUserService
 {
 	private readonly UserManager<IdentityUser> _userManager;
 	private readonly RoleManager<IdentityRole> _roleManager;
+	private readonly IUserProfileRepository _userRepo;
+	public UserService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IUserProfileRepository userRepo)
+	{
+		_roleManager = roleManager;
+		_userManager = userManager;
+		_userRepo = userRepo;
+	}
 	
 	public async Task<IdentityResult> AddUserAsync(string userName, string password)
 	{
 		var user = new IdentityUser { UserName = userName};
 		var result = await _userManager.CreateAsync(user, password);
+		if(result.Succeeded)
+		{
+			await _userRepo.AddUserProfileAsync(user.Id);
+		}
 		return result;
 	}
 	

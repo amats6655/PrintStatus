@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using PrintStatus.BLL;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Interfaces;
 
@@ -19,24 +20,30 @@ namespace PrintStatus.API.Controllers
         }
         // GET: api/<PrintersController>
         [HttpGet]
-        public IEnumerable<PrinterDTO> Get()
+        public async Task<IEnumerable<PrinterDTO>> Get()
         {
-            return new List<PrinterDTO>();
+            return await _printService.GetAllAsync();
         }
 
         // GET api/<PrintersController>/5
         [HttpGet("{id}")]
-        public async Task<string> Get(int id)
+        public async Task<PrinterDTO> Get(int id)
         {
             var result = await _printService.GetByIdAsync(id);
             string json = JsonSerializer.Serialize(result);
-            return json;
+            return result;
         }
 
         // POST api/<PrintersController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<StatusCodeResult> Post([FromBody] NewPrinterDTO value)
         {
+            var result = await _printService.AddAsync(value.Title, value.IpAddress, value.LocationId, value.UserProfileId);
+            if (result != null)
+            {
+                return Ok();
+            }
+            return NoContent();
         }
 
         // PUT api/<PrintersController>/5
@@ -48,8 +55,9 @@ namespace PrintStatus.API.Controllers
 
         // DELETE api/<PrintersController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<bool> Delete(int id)
         {
+            return await _printService.DeleteAsync(id, 2);
         }
     }
 }

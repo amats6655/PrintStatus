@@ -260,7 +260,7 @@ namespace PrintStatus.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("BasePrinterId")
+                    b.Property<int?>("BasePrinterId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Date")
@@ -279,7 +279,7 @@ namespace PrintStatus.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("BasePrinterId");
 
                     b.ToTable("AuditLogs");
                 });
@@ -296,7 +296,7 @@ namespace PrintStatus.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("LocationId")
+                    b.Property<int>("LocationId")
                         .HasColumnType("integer");
 
                     b.Property<int>("PrintModelId")
@@ -422,10 +422,6 @@ namespace PrintStatus.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("IdentityId")
@@ -517,20 +513,18 @@ namespace PrintStatus.DAL.Migrations
 
             modelBuilder.Entity("PrintStatus.DOM.Models.AuditLog", b =>
                 {
-                    b.HasOne("PrintStatus.DOM.Models.UserProfile", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
+                    b.HasOne("PrintStatus.DOM.Models.BasePrinter", null)
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("BasePrinterId");
                 });
 
             modelBuilder.Entity("PrintStatus.DOM.Models.BasePrinter", b =>
                 {
                     b.HasOne("PrintStatus.DOM.Models.Location", null)
                         .WithMany("Printers")
-                        .HasForeignKey("LocationId");
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("PrintStatus.DOM.Models.PrintModel", null)
                         .WithMany("Printers")
@@ -559,6 +553,8 @@ namespace PrintStatus.DAL.Migrations
 
             modelBuilder.Entity("PrintStatus.DOM.Models.BasePrinter", b =>
                 {
+                    b.Navigation("AuditLogs");
+
                     b.Navigation("Histories");
                 });
 
