@@ -1,4 +1,4 @@
-using Lextm.SharpSnmpLib;
+﻿using Lextm.SharpSnmpLib;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Interfaces;
@@ -87,15 +87,8 @@ namespace PrintStatus.BLL.Services
 					return null;
 				}
 			}
-
-			return new PrinterDTO()
-			{
-				Id = result.Id,
-				IpAddress = result.IpAddress,
-				LocationId = result.LocationId,
-				ModelId = result.PrintModelId,
-				Title = result.Title
-			};
+			
+			return new PrinterDTO(result.Id, result.Title, result.PrintModelId, result.IpAddress, result.LocationId);
 		}
 
 		public async Task<bool> DeleteAsync(int id, string identityUserId)
@@ -123,16 +116,7 @@ namespace PrintStatus.BLL.Services
 				var dataprinters = await _printRepo.GetAllAsync();
 				foreach(var printer in dataprinters)
 				{
-					result.Add(new PrinterDTO
-												{
-														Id = printer.Id,
-														IpAddress = printer.IpAddress,
-														LocationId = printer.LocationId,
-														ModelId = printer.PrintModelId,
-														Title = printer.Title,
-														Location = printer.Location.Title,
-														Model = printer.PrintModel.Title
-												});
+					result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
 				}
 				return result;
 			}
@@ -154,16 +138,7 @@ namespace PrintStatus.BLL.Services
 
 			foreach(var printer in dataPrinters)
 			{
-				result.Add(new PrinterDTO
-											{
-													Id = printer.Id,
-													Title = printer.Title,
-													IpAddress = printer.IpAddress,
-													LocationId = printer.LocationId,
-													ModelId = printer.PrintModelId,
-													Location = printer.Location.Title,
-													Model = printer.PrintModel.Title
-											});
+				result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
 			}
 			return result;
 		}
@@ -175,18 +150,9 @@ namespace PrintStatus.BLL.Services
 			if(modelId == 0) return result;
 			var dataPrinters = await _printRepo.GetAllByModelAsync(modelId, identityUserId);
 			if (!dataPrinters.Any()) return result;
-			foreach(var data in dataPrinters)
+			foreach(var printer in dataPrinters)
 			{
-				result.Add(new PrinterDTO
-											{
-													Id = data.Id,
-													Title = data.Title,
-													IpAddress = data.IpAddress,
-													LocationId = data.LocationId,
-													ModelId = data.PrintModelId,
-													Model = data.PrintModel.Title,
-													Location = data.Location.Title
-											});
+				result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
 			}
 			return result;
 		}
@@ -197,18 +163,9 @@ namespace PrintStatus.BLL.Services
 			var result = new List<PrinterDTO>();
 			var dataPrinters = await _printRepo.GetAllByUserAsync(identityUserId);
 			if(!dataPrinters.Any()) return result;
-			foreach(var data in dataPrinters)
+			foreach(var printer in dataPrinters)
 			{
-				result.Add(new PrinterDTO
-											{
-													Id = data.Id,
-													Title = data.Title,
-													IpAddress = data.IpAddress,
-													LocationId = data.LocationId,
-													ModelId = data.PrintModelId,
-													Model = data.PrintModel.Title,
-													Location = data.Location.Title
-											});
+				result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
 			}
 			return result;
 		}
@@ -216,19 +173,8 @@ namespace PrintStatus.BLL.Services
 		public async Task<PrinterDTO> GetByIdAsync(int id, string identityUserId)
 		{
 			var printer = await _printRepo.GetByIdAsync(id);
-			var model = await _modelRepo.GetByIdAsync(printer.PrintModelId);
-			var location = await _locationRepo.GetByIdAsync(printer.LocationId);
-			var printerDTO = new PrinterDTO()
-			{
-				Id = id,
-				Title = printer.Title,
-				IpAddress = printer.IpAddress,
-				LocationId = printer.LocationId,
-				ModelId = printer.PrintModelId,
-				Model = model.Title,
-				Location = location.Title
-			};
-			return printerDTO;
+			if(printer != null) return  new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.PrintModel.Title, printer.IpAddress, printer.LocationId, printer.Location.Title);
+			return null;
 		}
 
 		public async Task<PrinterDetailDTO> GetDetailByIdAsync(int id, string identityUserId)
@@ -287,14 +233,7 @@ namespace PrintStatus.BLL.Services
 			editPrinter.IpAddress = printer.IpAddress;
 			editPrinter.PrintModelId = printer.ModelId;
 			editPrinter.LocationId = printer.LocationId;
-			editPrinter.AuditLogs.Add(new AuditLog
-			{
-				ActionType = "Update",
-				UserId = userProfile.Id,
-				Date = DateTime.UtcNow,
-				OldValue = $"{editPrinter.Title}, {editPrinter.IpAddress}, {editPrinter.PrintModelId}, {editPrinter.LocationId}",
-				NewValue = $"{printer.Title}, {printer.IpAddress}, {printer.ModelId}, {printer.LocationId}"
-			});
+					//TODO Залоггировать выполнение операции
 			try
 			{
 				await _printRepo.UpdateAsync(editPrinter);
