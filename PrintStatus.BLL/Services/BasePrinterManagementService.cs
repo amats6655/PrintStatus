@@ -1,4 +1,4 @@
-﻿using Lextm.SharpSnmpLib;
+using Lextm.SharpSnmpLib;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Interfaces;
@@ -15,14 +15,14 @@ namespace PrintStatus.BLL.Services
 		private readonly IOidRepository _oidRepo;
 		private readonly IUserProfileRepository _profileRepo;
 		private readonly ISnmpService _snmpService;
-		private readonly IAuditLogRepository _auditRepo;
-		public BasePrinterManagementService(IBasePrinterRepository printRepo,
-											IPrintModelRepository modelRepo,
-											ILocationRepository locationRepo,
-											IOidRepository oidRepo,
-											IUserProfileRepository profileRepo,
-											ISnmpService snmpService,
-											IAuditLogRepository auditRepo)
+		public BasePrinterManagementService(
+												IBasePrinterRepository printRepo,
+												IPrintModelRepository modelRepo,
+												ILocationRepository locationRepo,
+												IOidRepository oidRepo,
+												IUserProfileRepository profileRepo,
+												ISnmpService snmpService
+											)
 		{
 			_printRepo = printRepo;
 			_modelRepo = modelRepo;
@@ -30,7 +30,6 @@ namespace PrintStatus.BLL.Services
 			_oidRepo = oidRepo;
 			_profileRepo = profileRepo;
 			_snmpService = snmpService;
-			_auditRepo = auditRepo;
 		}
 
 		public async Task<PrinterDTO> AddAsync(string title, string ipAddress, int locationId, string identityUserId)
@@ -61,21 +60,9 @@ namespace PrintStatus.BLL.Services
 						SerialNumber = snmpResult["SerialNumber"],
 						LocationId = locationId,
 						UserProfiles = new List<UserProfile>() { userProfile },
-						AuditLogs = new List<AuditLog>()
 					};
 					result = await _printRepo.AddAsync(newPrinter);
-					var newAuditLog = await _auditRepo.AddAsync(new AuditLog()
-					{
-						ActionType = "Add",
-						UserId = userProfile.Id,
-						Date = DateTime.UtcNow,
-						OldValue = "",
-						NewValue = $"Add new printer {result.SerialNumber}"
-					});
-
-					newPrinter.AuditLogs.Add(newAuditLog);
-					result = await _printRepo.UpdateAsync(newPrinter);
-
+					//TODO Залоггировать выполнение операции
 				}
 				catch (Exception ex)
 				{
@@ -89,16 +76,8 @@ namespace PrintStatus.BLL.Services
 			{
 				try
 				{
-					var newAuditLog = await _auditRepo.AddAsync(new AuditLog()
-					{
-						ActionType = "Add",
-						UserId = userProfile.Id,
-						Date = DateTime.UtcNow,
-						OldValue = "",
-						NewValue = $"Add user for printer {printer.SerialNumber}"
-					});
 					printer.UserProfiles.Add(userProfile);
-					printer.AuditLogs.Add(newAuditLog);
+					//TODO Залоггировать выполнение операции
 					result = await _printRepo.UpdateAsync(printer);
 				}
 				catch (Exception ex)
@@ -121,23 +100,11 @@ namespace PrintStatus.BLL.Services
 
 		public async Task<bool> DeleteAsync(int id, string identityUserId)
 		{
-			var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
 			try
 			{
 				var printer = await _printRepo.GetByIdAsync(id);
-				var newAuditLog = new AuditLog()
-				{
-					ActionType = "Delete",
-					UserId = userProfile.Id,
-					Date = DateTime.UtcNow,
-					OldValue = $"{printer.Id} {printer.Title} {printer.SerialNumber}",
-					NewValue = "Deleted"
-				};
+					//TODO Залоггировать выполнение операции
 				var result = await _printRepo.DeleteAsync(printer);
-				if (result)
-				{
-					await _auditRepo.AddAsync(newAuditLog);
-				}
 				return result;
 			}
 			catch (Exception ex)

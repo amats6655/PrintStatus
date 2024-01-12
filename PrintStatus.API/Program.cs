@@ -25,8 +25,6 @@ builder.Services.ConfigureDALServices(connectionString);
 
 builder.Services.AddScoped<IBasePrinterManagementService, BasePrinterManagementService>();
 builder.Services.AddScoped<IBasePrinterRepository, BasePrinterRepository>();
-builder.Services.AddScoped<IAuditLogManagementService, AuditLogManagementService>();
-builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IHistoryManagementService, HistoryManagementService>();
 builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 builder.Services.AddScoped<ILocationManagementService, LocationManagementService>();
