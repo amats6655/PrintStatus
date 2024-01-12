@@ -1,5 +1,5 @@
 <div align="center" id="top"> 
-  <img width=300 src="./.github/app.gif" alt="PrintStatus" loop=infinite/>
+  <img width=300 src="./.github/app.gif" alt="PrintStatus"/>
 
   &#xa0;
 
