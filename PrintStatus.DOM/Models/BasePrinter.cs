@@ -10,7 +10,6 @@
 		public int LocationId { get; set; }
 		public List<History>? Histories { get; set; }
 		public required List<UserProfile> UserProfiles { get; set; }
-		public required List<AuditLog> AuditLogs { get; set; }
 		public Location Location {get; set;}
 		public PrintModel PrintModel {get; set;}
 	}
