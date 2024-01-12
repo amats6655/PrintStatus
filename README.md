@@ -1,5 +1,5 @@
 <div align="center" id="top"> 
-  <img src="./.github/app.gif" alt="PrintStatus" />
+  <img width=300 src="./.github/app.gif" alt="PrintStatus" />
 
   &#xa0;
 
@@ -8,7 +8,7 @@
 
 <h1 align="center">PrintStatus</h1>
 
-<div>
+<div align="center">
   <img alt="Github top language" src="https://img.shields.io/github/languages/top/amats6655/printstatus?color=4f00db">
 
   <img alt="Github language count" src="https://img.shields.io/github/languages/count/amats6655/printstatus?color=4200b8">
