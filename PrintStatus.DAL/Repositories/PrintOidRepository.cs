@@ -5,15 +5,15 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.DAL.Repositories
 {
-    public class OidRepository : IOidRepository
+    public class PrintOidRepository : IPrintOidRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public OidRepository(ApplicationDbContext context)
+        public PrintOidRepository(ApplicationDbContext context)
         {
             _context = context;
         }
-        public async Task<Oid> AddAsync(Oid oid)
+        public async Task<PrintOid> AddAsync(PrintOid oid)
         {
             ArgumentNullException.ThrowIfNull(oid);
             try
@@ -30,7 +30,7 @@ namespace PrintStatus.DAL.Repositories
             }
         }
 
-        public async Task<bool> DeleteAsync(Oid oid)
+        public async Task<bool> DeleteAsync(PrintOid oid)
         {
             ArgumentNullException.ThrowIfNull(oid);
             try
@@ -47,7 +47,7 @@ namespace PrintStatus.DAL.Repositories
             }
         }
 
-        public async Task<IEnumerable<Oid>> GetAllAsync()
+        public async Task<IEnumerable<PrintOid>> GetAllAsync()
         {
             try
             {
@@ -58,11 +58,11 @@ namespace PrintStatus.DAL.Repositories
             {
                 //TODO Добавить обработчик ошибок
                 Console.WriteLine(ex.Message);
-                return Enumerable.Empty<Oid>();
+                return Enumerable.Empty<PrintOid>();
             }
         }
 
-        public async Task<Oid> GetByIdAsync(int id)
+        public async Task<PrintOid> GetByIdAsync(int id)
         {
             try
             {
@@ -76,7 +76,7 @@ namespace PrintStatus.DAL.Repositories
             }
         }
 
-        public async Task<Oid> UpdateAsync(Oid oid)
+        public async Task<PrintOid> UpdateAsync(PrintOid oid)
         {
             ArgumentNullException.ThrowIfNull(oid);
             try
@@ -92,7 +92,7 @@ namespace PrintStatus.DAL.Repositories
                 return null;
             }
         }
-        public async Task<IEnumerable<Oid>> GetAllByModelIdAsync(int modelId)
+        public async Task<IEnumerable<PrintOid>> GetAllByModelIdAsync(int modelId)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace PrintStatus.DAL.Repositories
             {
                 //TODO Добавить обработчик ошибок
                 Console.WriteLine(ex.Message);
-                return Enumerable.Empty<Oid>();
+                return Enumerable.Empty<PrintOid>();
             }
         }
     }

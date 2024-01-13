@@ -1,6 +1,6 @@
 ﻿namespace PrintStatus.DOM.Models
 {
-	public class Oid
+	public class PrintOid
 	{
 		public int Id { get; set; }
 		public required string Title { get; set; }
