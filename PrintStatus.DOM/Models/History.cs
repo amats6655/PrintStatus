@@ -1,4 +1,4 @@
-﻿// Ignore Spelling: Oid
+﻿// Ignore Spelling: PrintOid
 
 namespace PrintStatus.DOM.Models
 {
@@ -8,7 +8,7 @@ namespace PrintStatus.DOM.Models
 		public int BasePrinterId { get; set; }
 		public BasePrinter Printer {get; set;}
 		public int OidId { get; set; }
-		public Oid Oid { get; set; }
+		public PrintOid PrintOid { get; set; }
 		public required string Value { get; set; }
 		public DateTime Date { get; set; }
 	}
