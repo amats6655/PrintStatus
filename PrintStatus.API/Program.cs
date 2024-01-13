@@ -6,7 +6,6 @@ using PrintStatus.BLL.Services;
 using PrintStatus.DAL.Connection;
 using PrintStatus.DAL.Repositories;
 using PrintStatus.DOM.Interfaces;
-using PrintStatus.DOM.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +28,8 @@ builder.Services.AddScoped<IHistoryManagementService, HistoryManagementService>(
 builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 builder.Services.AddScoped<ILocationManagementService, LocationManagementService>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
-builder.Services.AddScoped<IOidManagementService, OidManagementService>();
-builder.Services.AddScoped<IOidRepository, OidRepository>();
+builder.Services.AddScoped<IPrintOidManagementService, OidManagementService>();
+builder.Services.AddScoped<IPrintOidRepository, PrintOidRepository>();
 builder.Services.AddScoped<IPrinterDataCollectorService, PrinterDataCollectorService>();
 builder.Services.AddScoped<IPrintModelManagementService, PrintModelManagementService>();
 builder.Services.AddScoped<IPrintModelRepository, PrintModelRepository>();
@@ -39,16 +38,16 @@ builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddAutoMapper(typeof(AppMappingProfile));
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-	// builder.Services.ConfigureDALServices(connectionString);
 	app.UseSwagger();
 	app.UseSwaggerUI();
-	
+
 }
 
 app.UseHttpsRedirection();
