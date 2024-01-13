@@ -1,5 +1,5 @@
-﻿using Lextm.SharpSnmpLib;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using AutoMapper;
+using Lextm.SharpSnmpLib;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Interfaces;
 using PrintStatus.DOM.Interfaces;
@@ -10,26 +10,29 @@ namespace PrintStatus.BLL.Services
 	public class BasePrinterManagementService : IBasePrinterManagementService
 	{
 		private readonly IBasePrinterRepository _printRepo;
-		private readonly IPrintModelRepository _modelRepo;
-		private readonly ILocationRepository _locationRepo;
-		private readonly IOidRepository _oidRepo;
+		private readonly IPrintModelManagementService _modelService;
+		private readonly ILocationManagementService _locationService;
+		private readonly IPrintOidManagementService _oidService;
 		private readonly IUserProfileRepository _profileRepo;
 		private readonly ISnmpService _snmpService;
+		private readonly IMapper _mapper;
 		public BasePrinterManagementService(
 												IBasePrinterRepository printRepo,
-												IPrintModelRepository modelRepo,
-												ILocationRepository locationRepo,
-												IOidRepository oidRepo,
+												IPrintModelManagementService modelService,
+												ILocationManagementService locationService,
+												IPrintOidManagementService oidService,
 												IUserProfileRepository profileRepo,
-												ISnmpService snmpService
+												ISnmpService snmpService,
+												IMapper mapper
 											)
 		{
 			_printRepo = printRepo;
-			_modelRepo = modelRepo;
-			_locationRepo = locationRepo;
-			_oidRepo = oidRepo;
+			_modelService = modelService;
+			_locationService = locationService;
+			_oidService = oidService;
 			_profileRepo = profileRepo;
 			_snmpService = snmpService;
+			_mapper = mapper;
 		}
 
 		public async Task<PrinterDTO> AddAsync(string title, string ipAddress, int locationId, string identityUserId)
@@ -37,7 +40,6 @@ namespace PrintStatus.BLL.Services
 			ArgumentException.ThrowIfNullOrEmpty(ipAddress, nameof(ipAddress));
 			var snmpResult = await _snmpService.GetModelAndSerialNumAsync(ipAddress);
 			var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
-
 			var printer = await _printRepo.GetIdBySerialNumberAsync(snmpResult["SerialNumber"]);
 			BasePrinter result;
 			// Если принтера нет в базе
@@ -45,18 +47,13 @@ namespace PrintStatus.BLL.Services
 			{
 				try
 				{
-					int modelId = await _modelRepo.GetIdByModelNameAsync(snmpResult["Model"]);
-					if (modelId == 0)
-					{
-						var addModel = await _modelRepo.AddAsync(new PrintModel() { Title = snmpResult["Model"] });
-						modelId = addModel.Id;
-					}
+					var printModel = await _modelService.AddAsync(snmpResult["Model"]);
 
 					var newPrinter = new BasePrinter()
 					{
 						IpAddress = ipAddress,
 						Title = title,
-						PrintModelId = modelId,
+						PrintModelId = printModel.Id,
 						SerialNumber = snmpResult["SerialNumber"],
 						LocationId = locationId,
 						UserProfiles = new List<UserProfile>() { userProfile },
@@ -87,8 +84,8 @@ namespace PrintStatus.BLL.Services
 					return null;
 				}
 			}
-			
-			return new PrinterDTO(result.Id, result.Title, result.PrintModelId, result.IpAddress, result.LocationId);
+
+			return _mapper.Map<PrinterDTO>(result);
 		}
 
 		public async Task<bool> DeleteAsync(int id, string identityUserId)
@@ -96,7 +93,7 @@ namespace PrintStatus.BLL.Services
 			try
 			{
 				var printer = await _printRepo.GetByIdAsync(id);
-					//TODO Залоггировать выполнение операции
+				//TODO Залоггировать выполнение операции
 				var result = await _printRepo.DeleteAsync(printer);
 				return result;
 			}
@@ -114,17 +111,17 @@ namespace PrintStatus.BLL.Services
 			try
 			{
 				var dataprinters = await _printRepo.GetAllAsync();
-				foreach(var printer in dataprinters)
+				foreach (var printer in dataprinters)
 				{
-					result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
+					result.Add(_mapper.Map<PrinterDTO>(printer));
 				}
 				return result;
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				//TODO Добавить обработчик ошибок
 				Console.WriteLine(ex.Message);
-				return result;
+				return null;
 			}
 		}
 
@@ -132,29 +129,34 @@ namespace PrintStatus.BLL.Services
 		{
 			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
 			var result = new List<PrinterDTO>();
-			if(locationId == 0) return result;
+			if (locationId == 0) return null;
 			var dataPrinters = await _printRepo.GetAllByLocationAsync(locationId, identityUserId);
-			if (!dataPrinters.Any()) return result;
-
-			foreach(var printer in dataPrinters)
+			if (!dataPrinters.Any())
 			{
-				result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
+				foreach (var printer in dataPrinters)
+				{
+					result.Add(_mapper.Map<PrinterDTO>(printer));
+				}
+				return result;
 			}
-			return result;
+			return null;
 		}
 
 		public async Task<IEnumerable<PrinterDTO>> GetAllByModelAsync(int modelId, string identityUserId)
 		{
 			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
 			var result = new List<PrinterDTO>();
-			if(modelId == 0) return result;
+			if (modelId == 0) return null;
 			var dataPrinters = await _printRepo.GetAllByModelAsync(modelId, identityUserId);
-			if (!dataPrinters.Any()) return result;
-			foreach(var printer in dataPrinters)
+			if (dataPrinters.Any())
 			{
-				result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
+				foreach (var printer in dataPrinters)
+				{
+					result.Add(_mapper.Map<PrinterDTO>(printer));
+				}
+				return result;
 			}
-			return result;
+			return null;
 		}
 
 		public async Task<IEnumerable<PrinterDTO>> GetAllByUserAsync(string identityUserId)
@@ -162,18 +164,21 @@ namespace PrintStatus.BLL.Services
 			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
 			var result = new List<PrinterDTO>();
 			var dataPrinters = await _printRepo.GetAllByUserAsync(identityUserId);
-			if(!dataPrinters.Any()) return result;
-			foreach(var printer in dataPrinters)
+			if (dataPrinters.Any())
 			{
-				result.Add(new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.IpAddress, printer.LocationId));
+				foreach (var printer in dataPrinters)
+				{
+					result.Add(_mapper.Map<PrinterDTO>(printer));
+				}
+				return result;
 			}
-			return result;
+			return null;
 		}
 
 		public async Task<PrinterDTO> GetByIdAsync(int id, string identityUserId)
 		{
 			var printer = await _printRepo.GetByIdAsync(id);
-			if(printer != null) return  new PrinterDTO(printer.Id, printer.Title, printer.PrintModelId, printer.PrintModel.Title, printer.IpAddress, printer.LocationId, printer.Location.Title);
+			if (printer != null) return _mapper.Map<PrinterDTO>(printer);
 			return null;
 		}
 
@@ -181,9 +186,9 @@ namespace PrintStatus.BLL.Services
 		{
 			// Получаем стандартные модели
 			var printer = await _printRepo.GetByIdAsync(id);
-			var model = await _modelRepo.GetByIdAsync(printer.PrintModelId);
-			var location = await _locationRepo.GetByIdAsync(printer.LocationId);
-			var oids = await _oidRepo.GetAllByModelIdAsync(printer.PrintModelId);
+			var model = await _modelService.GetByIdAsync(printer.PrintModelId);
+			var location = await _locationService.GetByIdAsync(printer.LocationId);
+			var oids = await _oidService.GetAllByModelAsync(printer.PrintModelId);
 
 			// Формируем список oid для запроса SNMP
 			var oidsForSNMP = new List<Variable>();
@@ -228,23 +233,26 @@ namespace PrintStatus.BLL.Services
 			ArgumentNullException.ThrowIfNull(printer);
 
 			var editPrinter = await _printRepo.GetByIdAsync(printer.Id);
-			var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
-			editPrinter.Title = printer.Title;
-			editPrinter.IpAddress = printer.IpAddress;
-			editPrinter.PrintModelId = printer.ModelId;
-			editPrinter.LocationId = printer.LocationId;
-					//TODO Залоггировать выполнение операции
-			try
+			if (editPrinter != null)
 			{
-				await _printRepo.UpdateAsync(editPrinter);
-				return printer;
+				editPrinter.Title = printer.Title;
+				editPrinter.IpAddress = printer.IpAddress;
+				editPrinter.PrintModelId = printer.ModelId;
+				editPrinter.LocationId = printer.LocationId;
+				//TODO Залоггировать выполнение операции
+				try
+				{
+					await _printRepo.UpdateAsync(editPrinter);
+					return printer;
+				}
+				catch (Exception ex)
+				{
+					//TODO Добавить обработку ошибок
+					Console.WriteLine(ex.Message);
+					return null;
+				}
 			}
-			catch (Exception ex)
-			{
-				//TODO Добавить обработку ошибок
-				Console.WriteLine(ex.Message);
-				return null;
-			}
+			return null;
 		}
 	}
 }

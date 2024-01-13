@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.DAL", "PrintSta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.DOM", "PrintStatus.DOM\PrintStatus.DOM.csproj", "{2C6D5CB0-6E06-4866-A90E-4C77E346FC93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrintStatus.API", "PrintStatus.API\PrintStatus.API.csproj", "{8D78FC18-A5DE-4F98-AA0B-813A3C3CB8C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.API", "PrintStatus.API\PrintStatus.API.csproj", "{8D78FC18-A5DE-4F98-AA0B-813A3C3CB8C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

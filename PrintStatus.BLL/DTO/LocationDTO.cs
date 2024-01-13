@@ -1,8 +1,10 @@
 ﻿namespace PrintStatus.BLL;
 
-public class LocationDTO(int id, string title)
+public class LocationDTO
 {
-    public int Id { get; set; } = id;
-    public string Title { get; set; } = title;
+	public int Id { get; set; }
+	public string Title { get; set; }
+	public LocationDTO() { }
+
 }
 
