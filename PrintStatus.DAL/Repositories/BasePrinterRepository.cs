@@ -12,161 +12,171 @@ namespace PrintStatus.DAL.Repositories
 		{
 			_context = context;
 		}
-		public async Task<BasePrinter> AddAsync(BasePrinter printer)
+		public async Task<IRepositoryResult<BasePrinter>> AddAsync(BasePrinter printer)
 		{
-			ArgumentNullException.ThrowIfNull(printer);
+			if (printer == null) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(printer)));
+			var printerExist = await _context.BasePrinters.AnyAsync(p => p.SerialNumber == printer.SerialNumber);
+			if (printerExist) return RepositoryResult<BasePrinter>.Failure(new List<string> {""},  $"Принтер {printer.SerialNumber} уже существует" );
 			try
 			{
-				_context.BasePrinters.Add(printer);
+				await _context.BasePrinters.AddAsync(printer);
 				await _context.SaveChangesAsync();
-				return printer;
+				return RepositoryResult<BasePrinter>.Success(printer, $"{printer.Title} создан");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<BasePrinter>().HandleException(ex);
 			}
 		}
 
-		public async Task<bool> DeleteAsync(BasePrinter printer)
+		public async Task<IRepositoryResult<bool>> DeleteAsync(BasePrinter printer)
 		{
-			ArgumentNullException.ThrowIfNull(printer);
+			if (printer == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(printer)));
+			var printerExist = await _context.BasePrinters.FindAsync(printer.Id);
+			if (printerExist == null) return RepositoryResult<bool>.Failure(new List<string> {""}, $"Принтер {printer.Id} не найден" );
 			try
 			{
 				_context.BasePrinters.Remove(printer);
 				await _context.SaveChangesAsync();
-				return true;
+				return RepositoryResult<bool>.Success(true, "Принтер удален");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return false;
+				return new RepositoryResult<bool>().HandleException(ex);
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllAsync()
+		public async Task<IRepositoryResult<IEnumerable<BasePrinter>>> GetAllAsync()
 		{
 			try
 			{
-				return await _context.BasePrinters.ToListAsync();
+				var printers = await _context.BasePrinters.AsNoTracking().ToListAsync();
+				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return Enumerable.Empty<BasePrinter>();
+				return new RepositoryResult<IEnumerable<BasePrinter>>().HandleException(ex);
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllByLocationAsync(int locationId, string identityUserId)
+		public async Task<IRepositoryResult<IEnumerable<BasePrinter>>> GetAllByLocationAsync(int locationId, string identityUserId)
 		{
+			if (locationId <= 0 || string.IsNullOrEmpty(identityUserId)) return new RepositoryResult<IEnumerable<BasePrinter>>()
+					.HandleException(new ArgumentNullException(nameof(locationId), nameof(identityUserId)));
 			try
 			{
-				return await _context.BasePrinters
+				var printers = await _context.BasePrinters
+								.AsNoTracking()
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
 								.Where(p => p.LocationId == locationId && p.UserProfiles
 									.Any(u => u.IdentityId == identityUserId))
 								.ToListAsync();
+				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return Enumerable.Empty<BasePrinter>();
+				return new RepositoryResult<IEnumerable<BasePrinter>>().HandleException(ex);
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllByModelAsync(int modelId, string identityUserId)
+		public async Task<IRepositoryResult<IEnumerable<BasePrinter>>> GetAllByModelAsync(int modelId, string identityUserId)
 		{
+			if (modelId <= 0 || string.IsNullOrEmpty(identityUserId)) return new RepositoryResult<IEnumerable<BasePrinter>>()
+					.HandleException(new ArgumentNullException(nameof(modelId), nameof(identityUserId)));
 			try
 			{
-				return await _context.BasePrinters
+				var printers = await _context.BasePrinters
+								.AsNoTracking()
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
 								.Where(p => p.PrintModelId == modelId && p.UserProfiles
 									.Any(u => u.IdentityId == identityUserId))
 								.ToListAsync();
+				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return Enumerable.Empty<BasePrinter>();
+				return new RepositoryResult<IEnumerable<BasePrinter>>().HandleException(ex);
 			}
 		}
 
-		public async Task<IEnumerable<BasePrinter>> GetAllByUserAsync(string identityUserId)
+		public async Task<IRepositoryResult<IEnumerable<BasePrinter>>> GetAllByUserAsync(string identityUserId)
 		{
-			
+			if (string.IsNullOrEmpty(identityUserId)) return new RepositoryResult<IEnumerable<BasePrinter>>()
+					.HandleException(new ArgumentNullException(nameof(identityUserId)));
 			try
 			{
-				return await _context.BasePrinters
+				var printers = await _context.BasePrinters
+								.AsNoTracking()
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
 								.Where(p => p.UserProfiles
 									.Any(u => u.IdentityId == identityUserId))
 								.ToListAsync();
+				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return Enumerable.Empty<BasePrinter>();
+				return new RepositoryResult<IEnumerable<BasePrinter>>().HandleException(ex);
 			}
 		}
 
-		public async Task<BasePrinter> GetByIdAsync(int id)
+		public async Task<IRepositoryResult<BasePrinter>> GetByIdAsync(int id)
 		{
+			if (id <= 0) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(id)));
 			try
 			{
-				return await _context.BasePrinters.FindAsync(id);
+				var result = await _context.BasePrinters.FindAsync(id);
+				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string> {""}, $"Не удалось найти принтер с id = {id}" );
+				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<BasePrinter>().HandleException(ex);
 			}
 		}
 
-		public async Task<BasePrinter> GetIdBySerialNumberAsync(string serialNumber)
+		public async Task<IRepositoryResult<BasePrinter>> GetBySerialNumberAsync(string serialNumber)
 		{
+			if (string.IsNullOrEmpty(serialNumber)) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(serialNumber)));
 			ArgumentException.ThrowIfNullOrEmpty(nameof(serialNumber));
 			try
 			{
-				return await _context.BasePrinters
+				var result = await _context.BasePrinters
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
 								.Where(p => p.SerialNumber
 									.Equals(serialNumber))
 								.FirstOrDefaultAsync();
+				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string> {""}, $"Не удалось найти принтер с серийным номером = {serialNumber}" );
+				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
 			catch (Exception ex)
 			{
-				//TODO добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<BasePrinter>().HandleException(ex);
 			}
 		}
 
-		public async Task<BasePrinter> UpdateAsync(BasePrinter printer)
+		public async Task<IRepositoryResult<BasePrinter>> UpdateAsync(BasePrinter printer)
 		{
-			ArgumentNullException.ThrowIfNull(printer);
+			if (printer == null) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(printer)));
+			var printerExist = await _context.BasePrinters.FindAsync(printer.Id);
+			if (printerExist == null) return RepositoryResult<BasePrinter>.Failure(new List<string> {""}, "Не найден изменяемый объект" );
 			try
 			{
+				printerExist.Title = printer.Title;
+				printerExist.IpAddress = printer.IpAddress;
+				printerExist.SerialNumber = printer.SerialNumber;
+				printerExist.PrintModelId = printer.PrintModelId;
 				_context.BasePrinters.Update(printer);
 				await _context.SaveChangesAsync();
-				return printer;
+				return RepositoryResult<BasePrinter>.Success(printerExist, "Принтер обновлен");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<BasePrinter>().HandleException(ex);
 			}
 		}
 	}

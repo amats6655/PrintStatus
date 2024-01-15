@@ -3,11 +3,11 @@ namespace PrintStatus.DOM.Interfaces
 {
 	public interface IPrintModelRepository
 	{
-		Task<PrintModel> GetByIdAsync(int id);
-		Task<PrintModel> AddAsync(PrintModel model);
-		Task<bool> DeleteAsync(PrintModel model);
-		Task<PrintModel> UpdateAsync(PrintModel model);
-		Task<IEnumerable<PrintModel>> GetAllAsync();
-		Task<PrintModel> GetIdByModelNameAsync(string modelName);
+		Task<IRepositoryResult<PrintModel>> GetByIdAsync(int id);
+		Task<IRepositoryResult<PrintModel>> AddAsync(PrintModel model);
+		Task<IRepositoryResult<bool>> DeleteAsync(PrintModel model);
+		Task<IRepositoryResult<PrintModel>> UpdateAsync(PrintModel model);
+		Task<IRepositoryResult<IEnumerable<PrintModel>>> GetAllAsync();
+		Task<IRepositoryResult<PrintModel>> GetByModelNameAsync(string modelName);
 	}
 }

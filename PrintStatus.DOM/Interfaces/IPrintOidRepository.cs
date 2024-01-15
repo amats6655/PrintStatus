@@ -2,13 +2,13 @@
 
 namespace PrintStatus.DOM.Interfaces
 {
-    public interface IPrintOidRepository
-    {
-        Task<PrintOid> GetByIdAsync(int id);
-        Task<PrintOid> AddAsync(PrintOid oid);
-        Task<bool> DeleteAsync(PrintOid oid);
-        Task<PrintOid> UpdateAsync(PrintOid oid);
-        Task<IEnumerable<PrintOid>> GetAllAsync();
-        Task<IEnumerable<PrintOid>> GetAllByModelIdAsync(int modelId);
-    }
+	public interface IPrintOidRepository
+	{
+		Task<IRepositoryResult<PrintOid>> GetByIdAsync(int id);
+		Task<IRepositoryResult<PrintOid>> AddAsync(PrintOid oid);
+		Task<IRepositoryResult<bool>> DeleteAsync(int id);
+		Task<IRepositoryResult<PrintOid>> UpdateAsync(PrintOid oid);
+		Task<IRepositoryResult<IEnumerable<PrintOid>>> GetAllAsync();
+		Task<IRepositoryResult<IEnumerable<PrintOid>>> GetAllByModelIdAsync(int modelId);
+	}
 }

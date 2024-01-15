@@ -4,11 +4,11 @@ namespace PrintStatus.DOM.Interfaces
 {
 	public interface ILocationRepository
 	{
-		Task<Location> GetByIdAsync(int id);
-		Task<IEnumerable<Location>> GetAllAsync();
-		Task<Location> AddAsync(Location location);
-		Task<bool> DeleteAsync(Location location);
-		Task<Location> UpdateAsync(Location location);
-		Task<Location> GetByTitle(string Title);
+		Task<IRepositoryResult<Location>> GetByIdAsync(int id);
+		Task<IRepositoryResult<IEnumerable<Location>>> GetAllAsync();
+		Task<IRepositoryResult<Location>> AddAsync(Location location);
+		Task<IRepositoryResult<bool>> DeleteAsync(Location location);
+		Task<IRepositoryResult<Location>> UpdateAsync(Location location);
+		Task<IRepositoryResult<Location>> GetByTitle(string Title);
 	}
 }

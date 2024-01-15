@@ -14,101 +14,103 @@ namespace PrintStatus.DAL.Repositories
 			_context = context;
 		}
 
-		public async Task<PrintModel> AddAsync(PrintModel model)
+		public async Task<IRepositoryResult<PrintModel>> AddAsync(PrintModel model)
 		{
-			ArgumentNullException.ThrowIfNull(model);
+			if (model == null) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(model)));
+			var modelExist = await _context.PrintModels.AnyAsync(m => m.Title.Equals(model.Title));
+			if (modelExist) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, $"{model.Title} уже существует");
 			try
 			{
-				_context.PrintModels.Add(model);
+				await _context.PrintModels.AddAsync(model);
 				await _context.SaveChangesAsync();
-				return model;
+				return RepositoryResult<PrintModel>.Success(model, $"{model.Title} создан");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<PrintModel>().HandleException(ex);
 			}
 		}
 
-		public async Task<bool> DeleteAsync(PrintModel model)
+		public async Task<IRepositoryResult<bool>> DeleteAsync(PrintModel model)
 		{
-			ArgumentNullException.ThrowIfNull(model);
+			if (model == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(model)));
+			var modelExist = await _context.PrintModels.FindAsync(model.Id);
+			if (modelExist == null) return RepositoryResult<bool>.Failure(new List<string> { "" },  "Модель не найдена");
+			if (modelExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string> { "" }, "Невозможно удалить модель, так как существуют связанные принтеры");
 			try
 			{
-				_context.PrintModels.Remove(model);
+				_context.PrintModels.Remove(modelExist);
 				await _context.SaveChangesAsync();
-				return true;
+				return RepositoryResult<bool>.Success(true, "Модель удалена");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return false;
+				return new RepositoryResult<bool>().HandleException(ex);
 			}
 		}
 
-		public async Task<IEnumerable<PrintModel>> GetAllAsync()
+		public async Task<IRepositoryResult<IEnumerable<PrintModel>>> GetAllAsync()
 		{
 			try
 			{
-				return await _context.PrintModels.ToListAsync();
-
+				var models = await _context.PrintModels.AsNoTracking().ToListAsync();
+				return RepositoryResult<IEnumerable<PrintModel>>.Success(models, $"Получено {models.Count} записей");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return Enumerable.Empty<PrintModel>();
+				return new RepositoryResult<IEnumerable<PrintModel>>().HandleException(ex);
 			}
 		}
 
-		public async Task<PrintModel> GetByIdAsync(int id)
+		public async Task<IRepositoryResult<PrintModel>> GetByIdAsync(int id)
 		{
+			if (id <= 0) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(id)));
 			try
 			{
-				return await _context.PrintModels.FindAsync(id);
-
+				var result = await _context.PrintModels.FindAsync(id);
+				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, $"Не удалось найти модель с id = {id}");
+				return RepositoryResult<PrintModel>.Success(result, "Модель найдена");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<PrintModel>().HandleException(ex);
 			}
 		}
 
-		public async Task<PrintModel> GetIdByModelNameAsync(string modelName)
+		public async Task<IRepositoryResult<PrintModel>> GetByModelNameAsync(string modelName)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(modelName);
+			if (string.IsNullOrEmpty(modelName)) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(modelName)));
 			try
 			{
-				return await _context.PrintModels
+				var result = await _context.PrintModels
 					.Where(m => m.Title == modelName)
 					.FirstOrDefaultAsync();
+				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, $"Не удалось найти модель с именем = {modelName}");
+				return RepositoryResult<PrintModel>.Success(result, "Модель найдена");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обрабочик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<PrintModel>().HandleException(ex);
 			}
 		}
 
-		public async Task<PrintModel> UpdateAsync(PrintModel model)
+		public async Task<IRepositoryResult<PrintModel>> UpdateAsync(PrintModel model)
 		{
-			ArgumentNullException.ThrowIfNull(model);
+			if (model == null) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(model)));
+			var modelExist = await _context.PrintModels.FindAsync(model.Id);
+			if (modelExist == null) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, "Не найден изменяемый объект");
 			try
 			{
-				_context.PrintModels.Update(model);
+				modelExist.Title = model.Title;
+				modelExist.IsColor = model.IsColor;
+				modelExist.ConsumableCalcType = model.ConsumableCalcType;
+				_context.PrintModels.Update(modelExist);
 				await _context.SaveChangesAsync();
-				return model;
+				return RepositoryResult<PrintModel>.Success(modelExist, "Модель обновлена");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<PrintModel>().HandleException(ex);
 			}
 		}
 	}

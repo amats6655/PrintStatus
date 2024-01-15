@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data.Common;
+using Microsoft.EntityFrameworkCore;
 using PrintStatus.DAL.Connection;
 using PrintStatus.DOM.Interfaces;
 using PrintStatus.DOM.Models;
@@ -13,50 +14,54 @@ namespace PrintStatus.DAL.Repositories
 			_context = context;
 		}
 
-		public async Task<UserProfile> AddUserProfileAsync(string identityUserId)
+		public async Task<IRepositoryResult<UserProfile>> AddUserProfileAsync(string identityUserId)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
+			if(string.IsNullOrWhiteSpace(identityUserId)) return new RepositoryResult<UserProfile>().HandleException(new ArgumentNullException(nameof(identityUserId)));
+			var userExist = await _context.UserProfiles.AnyAsync(u => u.IdentityId.Equals(identityUserId));
+			if (userExist) return RepositoryResult<UserProfile>.Failure(new List<string> {""}, "Пользователь с таким identityUserId уже существует");
 			try
 			{
-				var userProfile = new UserProfile() { IdentityId = identityUserId, Printer = new List<BasePrinter>()};
+				var userProfile = new UserProfile() { IdentityId = identityUserId, Printer = new List<BasePrinter>() };
 				await _context.UserProfiles.AddAsync(userProfile);
 				await _context.SaveChangesAsync();
-				return userProfile;
-			}
-			catch(Exception ex)
-			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
-			}
-		}
-
-		public async Task<UserProfile> GetUserByIdAsync(int id)
-		{
-			try
-			{
-				return await _context.UserProfiles.FindAsync(id);
+				return RepositoryResult<UserProfile>.Success(userProfile, "Пользователь успешно добавлен");
 			}
 			catch (Exception ex)
 			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
+				return new RepositoryResult<UserProfile>().HandleException(ex);
 			}
 		}
 
-		public async Task<UserProfile> GetUserByIdentityId(string identityUserId)
+		public async Task<IRepositoryResult<UserProfile>> GetUserByIdAsync(int id)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
-			var result = await _context.UserProfiles
+			if(id <= 0) return new RepositoryResult<UserProfile>().HandleException(new ArgumentNullException(nameof(id)));
+			try
+			{
+				var result = await _context.UserProfiles.FindAsync(id);
+				if (result == null) return RepositoryResult<UserProfile>.Failure(new List<string> {""}, "Пользователь не найден");
+				return RepositoryResult<UserProfile>.Success(result, "Пользователь найден"); ;
+			}
+			catch (Exception ex)
+			{
+				return new RepositoryResult<UserProfile>().HandleException(ex);
+			}
+		}
+
+		public async Task<IRepositoryResult<UserProfile>> GetUserByIdentityId(string identityUserId)
+		{
+			if(string.IsNullOrWhiteSpace(identityUserId)) return new RepositoryResult<UserProfile>().HandleException(new ArgumentNullException(nameof(identityUserId)));
+			try
+			{
+				var result = await _context.UserProfiles
 									.Where(u => u.IdentityId.Equals(identityUserId))
 									.FirstOrDefaultAsync();
-			if (result != null)
-			{
-				return result;
+				if (result == null) return RepositoryResult<UserProfile>.Failure(new List<string> {""}, "Пользователь не найден");
+				return RepositoryResult<UserProfile>.Success(result, "Пользователь найден");
 			}
-			//TODO добавить обработку null
-			return null;
+			catch (Exception ex)
+			{
+				return new RepositoryResult<UserProfile>().HandleException(ex);			
+			}
 		}
 	}
 }
