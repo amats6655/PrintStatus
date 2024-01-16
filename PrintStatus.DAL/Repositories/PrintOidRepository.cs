@@ -17,7 +17,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (oid == null) return new RepositoryResult<PrintOid>().HandleException(new ArgumentNullException(nameof(oid)));
 			var oidExist = await _context.Oids.AnyAsync(o => o.Value.Equals(oid.Value));
-			if (oidExist) return RepositoryResult<PrintOid>.Failure(new List<string> { "" }, $"{oid.Value} уже существует");
+			if (oidExist) return RepositoryResult<PrintOid>.Failure(new List<string>(), $"{oid.Value} уже существует");
 			try
 			{
 				await _context.Oids.AddAsync(oid);
@@ -33,7 +33,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (id <= 0) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(id)));
 			var oidExist = await _context.Oids.FindAsync(id);
-			if (oidExist == null) return RepositoryResult<bool>.Failure(new List<string> { "" }, "Oid не найден");
+			if (oidExist == null) return RepositoryResult<bool>.Failure(new List<string>(), "Oid не найден");
 			try
 			{
 				_context.Oids.Remove(oidExist);
@@ -75,7 +75,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (oid == null) return new RepositoryResult<PrintOid>().HandleException(new ArgumentNullException(nameof(oid)));
 			var oidExist = await _context.Oids.FindAsync(oid.Id);
-			if (oidExist == null) return RepositoryResult<PrintOid>.Failure(new List<string> { "" }, "Не найден изменяемый объект");
+			if (oidExist == null) return RepositoryResult<PrintOid>.Failure(new List<string>(), "Не найден изменяемый объект");
 			try
 			{
 				oidExist.Value = oid.Value;

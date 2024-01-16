@@ -18,7 +18,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (model == null) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(model)));
 			var modelExist = await _context.PrintModels.AnyAsync(m => m.Title.Equals(model.Title));
-			if (modelExist) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, $"{model.Title} уже существует");
+			if (modelExist) return RepositoryResult<PrintModel>.Failure(new List<string>(), $"{model.Title} уже существует");
 			try
 			{
 				await _context.PrintModels.AddAsync(model);
@@ -35,8 +35,8 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (model == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(model)));
 			var modelExist = await _context.PrintModels.FindAsync(model.Id);
-			if (modelExist == null) return RepositoryResult<bool>.Failure(new List<string> { "" },  "Модель не найдена");
-			if (modelExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string> { "" }, "Невозможно удалить модель, так как существуют связанные принтеры");
+			if (modelExist == null) return RepositoryResult<bool>.Failure(new List<string>(),  "Модель не найдена");
+			if (modelExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string>(), "Невозможно удалить модель, так как существуют связанные принтеры");
 			try
 			{
 				_context.PrintModels.Remove(modelExist);
@@ -68,7 +68,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.PrintModels.FindAsync(id);
-				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, $"Не удалось найти модель с id = {id}");
+				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string>(), $"Не удалось найти модель с id = {id}");
 				return RepositoryResult<PrintModel>.Success(result, "Модель найдена");
 			}
 			catch (Exception ex)
@@ -85,7 +85,7 @@ namespace PrintStatus.DAL.Repositories
 				var result = await _context.PrintModels
 					.Where(m => m.Title == modelName)
 					.FirstOrDefaultAsync();
-				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, $"Не удалось найти модель с именем = {modelName}");
+				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string>(), $"Не удалось найти модель с именем = {modelName}");
 				return RepositoryResult<PrintModel>.Success(result, "Модель найдена");
 			}
 			catch (Exception ex)
@@ -98,7 +98,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (model == null) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(model)));
 			var modelExist = await _context.PrintModels.FindAsync(model.Id);
-			if (modelExist == null) return RepositoryResult<PrintModel>.Failure(new List<string> { "" }, "Не найден изменяемый объект");
+			if (modelExist == null) return RepositoryResult<PrintModel>.Failure(new List<string>(), "Не найден изменяемый объект");
 			try
 			{
 				modelExist.Title = model.Title;

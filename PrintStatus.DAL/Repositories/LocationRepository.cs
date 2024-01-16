@@ -16,7 +16,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (location == null) return new RepositoryResult<Location>().HandleException(new ArgumentNullException(nameof(location)));
 			var locationExist = await _context.Locations.AnyAsync(l => l.Title.Equals(location.Title));
-			if (locationExist) return RepositoryResult<Location>.Failure(new List<string> { "" }, $"{location.Title} уже существует");
+			if (locationExist) return RepositoryResult<Location>.Failure(new List<string>(), $"{location.Title} уже существует");
 			try
 			{
 				await _context.AddAsync(location);
@@ -34,8 +34,8 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (location == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(location)));
 			var locationExist = await _context.Locations.FindAsync(location.Id);
-			if (locationExist == null) return RepositoryResult<bool>.Failure(new List<string> { "" }, $"Местоположение {location.Title} не найдено");
-			if (locationExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string> { "" }, "Невозможно удалить местоположение, так как существуют связанные принтеры");
+			if (locationExist == null) return RepositoryResult<bool>.Failure(new List<string>(), $"Местоположение {location.Title} не найдено");
+			if (locationExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string>(), "Невозможно удалить местоположение, так как существуют связанные принтеры");
 			try
 			{
 				_context.Remove(locationExist);

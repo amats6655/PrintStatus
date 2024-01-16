@@ -129,7 +129,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.BasePrinters.FindAsync(id);
-				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string> {""}, $"Не удалось найти принтер с id = {id}" );
+				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с id = {id}" );
 				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
 			catch (Exception ex)
@@ -150,7 +150,7 @@ namespace PrintStatus.DAL.Repositories
 								.Where(p => p.SerialNumber
 									.Equals(serialNumber))
 								.FirstOrDefaultAsync();
-				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string> {""}, $"Не удалось найти принтер с серийным номером = {serialNumber}" );
+				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с серийным номером = {serialNumber}" );
 				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
 			catch (Exception ex)

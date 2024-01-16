@@ -46,7 +46,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.Histories.FindAsync(id);
-				if (result == null) return RepositoryResult<History>.Failure(new List<string> { "" }, $"Не удалось найти историю с id = {id}");
+				if (result == null) return RepositoryResult<History>.Failure(new List<string> (), $"Не удалось найти историю с id = {id}");
 				return RepositoryResult<History>.Success(result, "История получена");
 			}
 			catch (Exception ex)
