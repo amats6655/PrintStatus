@@ -1,8 +1,5 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL;
-using PrintStatus.BLL.DTO;
-using PrintStatus.BLL.Interfaces;
 using PrintStatus.DOM.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -23,23 +20,23 @@ namespace PrintStatus.API.Controllers
 		[HttpGet]
 		public IEnumerable<UserProfile> Get()
 		{
-			return new List<UserProfile>();
+			return [];
 		}
 
 		// GET api/<UserController>/5
 		[HttpGet("{id}")]
 		public async Task<UserProfile> Get(int id)
 		{
-			var result = new UserProfile(){IdentityId = Guid.NewGuid().ToString()};
+			var result = new UserProfile() { IdentityId = Guid.NewGuid().ToString() };
 			return result;
 		}
 
 		// POST api/<UserController>
 		[HttpPost]
-		public async Task<StatusCodeResult> Post([FromBody] NewUserDTO value)
+		public async Task<StatusCodeResult> Post([FromBody] AuthUserDTO value)
 		{
-			var result = await _userService.AddUserAsync(value.userName, value.password);
-			if(result != null)
+			var result = await _userService.AddUserAsync(value.UserName, value.Password);
+			if (result != null)
 			{
 				return Ok();
 			}

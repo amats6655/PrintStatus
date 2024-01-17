@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL;
 using PrintStatus.BLL.DTO;
@@ -19,14 +19,22 @@ namespace PrintStatus.API.Controllers
 		{
 			_printService = printerManagementService;
 		}
-		// GET: api/<PrintersController>
+		
 		[HttpGet]
-		public async Task<IEnumerable<PrinterDTO>> Get()
+		[Authorize]
+		[Route("getAll")]
+		public async Task<IActionResult> Get()
 		{
-			return await _printService.GetAllAsync();
+			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+			var result = await _printService.GetAllByUserAsync(userId);
+			if (result == null)
+			{
+				return Ok(new List<PrinterDTO>());
+			}
+			return Ok(result);
 		}
 
-		// GET api/<PrintersController>/5
+		
 		[HttpGet("{id}")]
 		public async Task<PrinterDTO> Get(int id)
 		{
@@ -35,29 +43,20 @@ namespace PrintStatus.API.Controllers
 			return result;
 		}
 
-		// POST api/<PrintersController>
+		
 		[HttpPost]
-		public async Task<StatusCodeResult> Post([FromBody] NewPrinterDTO value)
+		public async Task<IActionResult> Post([FromBody] NewPrinterDTO value)
 		{
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-			var result = await _printService.AddAsync(value.Title, value.IpAddress, value.LocationId, userId);
-			if (result != null)
-			{
-				return Ok();
-			}
-			return NoContent();
-		}
-
-		// PUT api/<PrintersController>/5
-		[HttpPut("{id}")]
-		public void Put()
-		{
-
+			value.IdentityUserId = userId;
+			var result = await _printService.AddAsync(value);
+			if(result.IsSuccess) return Ok(result.Message);
+			return null;
 		}
 
 		// DELETE api/<PrintersController>/5
 		[HttpDelete("{id}")]
-		public async Task<bool> Delete(int id)
+		public async Task<ActionResult> Delete(int id)
 		{
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 			return await _printService.DeleteAsync(id, userId);
