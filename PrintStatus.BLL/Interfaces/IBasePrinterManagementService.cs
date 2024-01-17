@@ -4,14 +4,14 @@ namespace PrintStatus.BLL.Interfaces
 {
 	public interface IBasePrinterManagementService
 	{
-		Task<PrinterDTO> GetByIdAsync(int id, string identityUserId);
-		Task<PrinterDetailDTO> GetDetailByIdAsync(int id, string identityUserId);
-		Task<PrinterDTO> AddAsync(string title, string ipAddress, int locationId, string identityUserId);
-		Task<PrinterDTO> UpdateAsync(PrinterDTO printer, string identityUserId);
-		Task<bool> DeleteAsync(int id, string identityUserId);
-		Task<IEnumerable<PrinterDTO>> GetAllAsync();
-		Task<IEnumerable<PrinterDTO>> GetAllByModelAsync(int modelId, string identityUserId);
-		Task<IEnumerable<PrinterDTO>> GetAllByUserAsync(string identityUserId);
-		Task<IEnumerable<PrinterDTO>> GetAllByLocationAsync(int locationId, string identityUserId);
+		Task<IServiceResult<PrinterDTO>> GetByIdAsync(int id);
+		Task<IServiceResult<PrinterDetailDTO>> GetDetailByIdAsync(int id, string identityUserId);
+		Task<IServiceResult<PrinterDTO>> AddAsync(NewPrinterDTO printer);
+		Task<IServiceResult<PrinterDTO>> UpdateAsync(PrinterDTO printer, string identityUserId);
+		Task<IServiceResult<bool>> DeleteAsync(int id, string identityUserId);
+		Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllAsync();
+		Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllByModelAsync(int modelId, string identityUserId);
+		Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllByUserAsync(string identityUserId);
+		Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllByLocationAsync(int locationId, string identityUserId);
 	}
 }

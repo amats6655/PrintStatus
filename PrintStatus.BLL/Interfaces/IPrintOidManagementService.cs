@@ -4,10 +4,10 @@ namespace PrintStatus.BLL.Interfaces
 {
 	public interface IPrintOidManagementService
 	{
-		Task<OidDTO> AddAsync(OidDTO oid);
-		Task<OidDTO> GetByIdAsync(int id);
-		Task<IEnumerable<OidDTO>> GetAllByModelAsync(int modelId);
-		Task<OidDTO> UpdateAsync(OidDTO oid);
-		Task<bool> DeleteAsync(int oidId);
+		Task<IServiceResult<OidDTO>> AddAsync(OidDTO oid);
+		Task<IServiceResult<OidDTO>> GetByIdAsync(int id);
+		Task<IServiceResult<IEnumerable<OidDTO>>> GetAllByModelAsync(int modelId);
+		Task<IServiceResult<OidDTO>> UpdateAsync(OidDTO oid);
+		Task<IServiceResult<bool>> DeleteAsync(int oidId);
 	}
 }

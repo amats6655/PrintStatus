@@ -2,10 +2,10 @@
 {
 	public interface ILocationManagementService
 	{
-		Task<LocationDTO> AddAsync(LocationDTO location);
-		Task<LocationDTO> UpdateAsync(LocationDTO location);
-		Task<bool> DeleteAsync(int id);
-		Task<LocationDTO> GetByIdAsync(int id);
-		Task<IEnumerable<LocationDTO>> GetAllAsync();
+		Task<IServiceResult<LocationDTO>> AddAsync(LocationDTO location);
+		Task<IServiceResult<LocationDTO>> UpdateAsync(LocationDTO location);
+		Task<IServiceResult<bool>> DeleteAsync(int id);
+		Task<IServiceResult<LocationDTO>> GetByIdAsync(int id);
+		Task<IServiceResult<IEnumerable<LocationDTO>>> GetAllAsync();
 	}
 }
