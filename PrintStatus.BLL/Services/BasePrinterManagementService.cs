@@ -16,6 +16,7 @@ namespace PrintStatus.BLL.Services
 		private readonly IUserProfileRepository _profileRepo;
 		private readonly ISnmpService _snmpService;
 		private readonly IMapper _mapper;
+		private readonly IAccountService _accountService;
 		public BasePrinterManagementService(
 												IBasePrinterRepository printRepo,
 												IPrintModelManagementService modelService,
@@ -23,7 +24,8 @@ namespace PrintStatus.BLL.Services
 												IPrintOidManagementService oidService,
 												IUserProfileRepository profileRepo,
 												ISnmpService snmpService,
-												IMapper mapper
+												IMapper mapper,
+												IAccountService accountService
 											)
 		{
 			_printRepo = printRepo;
@@ -33,175 +35,152 @@ namespace PrintStatus.BLL.Services
 			_profileRepo = profileRepo;
 			_snmpService = snmpService;
 			_mapper = mapper;
+			_accountService = accountService;
 		}
 
-		public async Task<PrinterDTO> AddAsync(string title, string ipAddress, int locationId, string identityUserId)
+		public async Task<IServiceResult<PrinterDTO>> AddAsync(NewPrinterDTO printer)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(ipAddress, nameof(ipAddress));
-			var snmpResult = await _snmpService.GetModelAndSerialNumAsync(ipAddress);
-			var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
-			var printer = await _printRepo.GetIdBySerialNumberAsync(snmpResult["SerialNumber"]);
-			BasePrinter result;
-			// Если принтера нет в базе
-			if (printer == null)
+			if (printer == null) return ServiceResult<PrinterDTO>.Failure("Неверный идентификатор принтера");
+			var snmpResult = await _snmpService.GetModelAndSerialNumAsync(printer.IpAddress);
+			if (!snmpResult.IsSuccess) return ServiceResult<PrinterDTO>.Failure(snmpResult.Message);
+			var userProfile = await _profileRepo.GetUserByIdentityId(printer.IdentityUserId);
+			if (!userProfile.IsSuccess) return ServiceResult<PrinterDTO>.Failure(userProfile.Message);
+			var printerExist = await _printRepo.GetBySerialNumberAsync(snmpResult.Data["SerialNumber"]);
+			if (printerExist.Errors.Any()) return ServiceResult<PrinterDTO>.Failure(printerExist.Message);
+			PrinterDTO newPrinterDTO;
+			if (printerExist.IsSuccess)
 			{
-				try
+				var printModel = await _modelService.AddAsync(snmpResult.Data["Model"]);
+				if (!printModel.IsSuccess) return ServiceResult<PrinterDTO>.Failure(printModel.Message);
+				var newPrinter = new BasePrinter()
 				{
-					var printModel = await _modelService.AddAsync(snmpResult["Model"]);
-
-					var newPrinter = new BasePrinter()
-					{
-						IpAddress = ipAddress,
-						Title = title,
-						PrintModelId = printModel.Id,
-						SerialNumber = snmpResult["SerialNumber"],
-						LocationId = locationId,
-						UserProfiles = new List<UserProfile>() { userProfile },
-					};
-					result = await _printRepo.AddAsync(newPrinter);
-					//TODO Залоггировать выполнение операции
-				}
-				catch (Exception ex)
-				{
-					//TODO Написать обработчик ошибок
-					Console.WriteLine(ex.Message);
-					return null;
-				}
+					IpAddress = printer.IpAddress,
+					Title = printer.Title,
+					PrintModelId = printModel.Data.Id,
+					SerialNumber = snmpResult.Data["SerialNumber"],
+					LocationId = printer.LocationId,
+					UserProfiles = new List<UserProfile> { userProfile.Data },
+				};
+				var resultAdd = await _printRepo.AddAsync(newPrinter);
+				if (!resultAdd.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultAdd.Message);
+				newPrinterDTO = _mapper.Map<PrinterDTO>(resultAdd.Data);
 			}
-			// Если принтер есть, просто добавляем ему пользователя
 			else
 			{
-				try
-				{
-					printer.UserProfiles.Add(userProfile);
-					//TODO Залоггировать выполнение операции
-					result = await _printRepo.UpdateAsync(printer);
-				}
-				catch (Exception ex)
-				{
-					//TODO Написать обработчик ошибок
-					Console.WriteLine(ex.Message);
-					return null;
-				}
+				printerExist.Data.UserProfiles.Add(userProfile.Data);
+				var resultUpdate = await _printRepo.UpdateAsync(printerExist.Data);
+				if (!resultUpdate.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultUpdate.Message);
+				newPrinterDTO = _mapper.Map<PrinterDTO>(resultUpdate.Data);
 			}
-
-			return _mapper.Map<PrinterDTO>(result);
+			return ServiceResult<PrinterDTO>.Success(newPrinterDTO, "Принтер добавлен");
 		}
 
-		public async Task<bool> DeleteAsync(int id, string identityUserId)
+		public async Task<IServiceResult<bool>> DeleteAsync(int id, string identityUserId)
 		{
-			try
+			if (id <= 0) return ServiceResult<bool>.Failure("Неверный идентификатор притентера");
+			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<bool>.Failure("Неавторизованная операция");
+			var deletedPrinter = await _printRepo.GetByIdAsync(id);
+			if (!deletedPrinter.IsSuccess) return ServiceResult<bool>.Failure(deletedPrinter.Message);
+			var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
+			if (!userProfile.IsSuccess) return ServiceResult<bool>.Failure(userProfile.Message);
+
+			deletedPrinter.Data.UserProfiles.Remove(userProfile.Data);
+			var removePrinterFromUser = await _printRepo.UpdateAsync(deletedPrinter.Data);
+			if (!removePrinterFromUser.IsSuccess) return ServiceResult<bool>.Failure(removePrinterFromUser.Message);
+			if (removePrinterFromUser.Data.UserProfiles.Count >= 1) return ServiceResult<bool>.Success(true, "Принтер удален");
+			else
 			{
-				var printer = await _printRepo.GetByIdAsync(id);
-				//TODO Залоггировать выполнение операции
-				var result = await _printRepo.DeleteAsync(printer);
-				return result;
-			}
-			catch (Exception ex)
-			{
-				//TODO Написать обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return false;
+				var resultDeletePrinter = await _printRepo.DeleteAsync(removePrinterFromUser.Data);
+				if (!resultDeletePrinter.IsSuccess) return ServiceResult<bool>.Failure(resultDeletePrinter.Message);
+				return ServiceResult<bool>.Success(true, "Принтер удален");
 			}
 		}
 
-		public async Task<IEnumerable<PrinterDTO>> GetAllAsync()
+		public async Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllAsync()
 		{
+			var printers = await _printRepo.GetAllAsync();
+			if (!printers.IsSuccess) return ServiceResult<IEnumerable<PrinterDTO>>.Failure(printers.Message);
 			var result = new List<PrinterDTO>();
-			try
+			foreach (var printer in printers.Data)
 			{
-				var dataprinters = await _printRepo.GetAllAsync();
-				foreach (var printer in dataprinters)
-				{
-					result.Add(_mapper.Map<PrinterDTO>(printer));
-				}
-				return result;
+				result.Add(_mapper.Map<PrinterDTO>(printer));
 			}
-			catch (Exception ex)
-			{
-				//TODO Добавить обработчик ошибок
-				Console.WriteLine(ex.Message);
-				return null;
-			}
+			return ServiceResult<IEnumerable<PrinterDTO>>.Success(result, "Принтеры получены");
 		}
 
-		public async Task<IEnumerable<PrinterDTO>> GetAllByLocationAsync(int locationId, string identityUserId)
+		public async Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllByLocationAsync(int locationId, string identityUserId)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
+			if (locationId <= 0) return ServiceResult<IEnumerable<PrinterDTO>>.Failure("Неверный идентификатор местоположения");
+			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<IEnumerable<PrinterDTO>>.Failure("Неавторизованная операция");
+			var printers = await _printRepo.GetAllByLocationAsync(locationId, identityUserId);
+			if (!printers.IsSuccess) return ServiceResult<IEnumerable<PrinterDTO>>.Failure(printers.Message);
 			var result = new List<PrinterDTO>();
-			if (locationId == 0) return null;
-			var dataPrinters = await _printRepo.GetAllByLocationAsync(locationId, identityUserId);
-			if (!dataPrinters.Any())
+			foreach (var printer in printers.Data)
 			{
-				foreach (var printer in dataPrinters)
-				{
-					result.Add(_mapper.Map<PrinterDTO>(printer));
-				}
-				return result;
+				result.Add(_mapper.Map<PrinterDTO>(printer));
 			}
-			return null;
+			return ServiceResult<IEnumerable<PrinterDTO>>.Success(result, "Принтеры получены");
 		}
 
-		public async Task<IEnumerable<PrinterDTO>> GetAllByModelAsync(int modelId, string identityUserId)
+		public async Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllByModelAsync(int modelId, string identityUserId)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
+			if (modelId <= 0) return ServiceResult<IEnumerable<PrinterDTO>>.Failure("Неверный идентификатор модели");
+			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<IEnumerable<PrinterDTO>>.Failure("Неавторизованная операция");
+			var printers = await _printRepo.GetAllByModelAsync(modelId, identityUserId);
+			if (!printers.IsSuccess) return ServiceResult<IEnumerable<PrinterDTO>>.Failure(printers.Message);
 			var result = new List<PrinterDTO>();
-			if (modelId == 0) return null;
-			var dataPrinters = await _printRepo.GetAllByModelAsync(modelId, identityUserId);
-			if (dataPrinters.Any())
+			foreach (var printer in printers.Data)
 			{
-				foreach (var printer in dataPrinters)
-				{
-					result.Add(_mapper.Map<PrinterDTO>(printer));
-				}
-				return result;
+				result.Add(_mapper.Map<PrinterDTO>(printer));
 			}
-			return null;
+			return ServiceResult<IEnumerable<PrinterDTO>>.Success(result, "Принтеры получены");
 		}
 
-		public async Task<IEnumerable<PrinterDTO>> GetAllByUserAsync(string identityUserId)
+		public async Task<IServiceResult<IEnumerable<PrinterDTO>>> GetAllByUserAsync(string identityUserId)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(identityUserId, nameof(identityUserId));
+			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<IEnumerable<PrinterDTO>>.Failure("Неавторизованная операция");
+			var printers = await _printRepo.GetAllByUserAsync(identityUserId);
+			if (!printers.IsSuccess) return ServiceResult<IEnumerable<PrinterDTO>>.Failure(printers.Message);
 			var result = new List<PrinterDTO>();
-			var dataPrinters = await _printRepo.GetAllByUserAsync(identityUserId);
-			if (dataPrinters.Any())
+			foreach (var printer in printers.Data)
 			{
-				foreach (var printer in dataPrinters)
-				{
-					result.Add(_mapper.Map<PrinterDTO>(printer));
-				}
-				return result;
+				result.Add(_mapper.Map<PrinterDTO>(printer));
 			}
-			return null;
+			return ServiceResult<IEnumerable<PrinterDTO>>.Success(result, "Принтеры получены");
 		}
 
-		public async Task<PrinterDTO> GetByIdAsync(int id, string identityUserId)
+		public async Task<IServiceResult<PrinterDTO>> GetByIdAsync(int id)
 		{
+			if (id <= 0) return ServiceResult<PrinterDTO>.Failure("Неверный идентификатор притентера");
 			var printer = await _printRepo.GetByIdAsync(id);
-			if (printer != null) return _mapper.Map<PrinterDTO>(printer);
-			return null;
+			if (!printer.IsSuccess) return ServiceResult<PrinterDTO>.Failure(printer.Message);
+			var result = _mapper.Map<PrinterDTO>(printer);
+			return ServiceResult<PrinterDTO>.Success(result, "Принтер получен");
 		}
 
-		public async Task<PrinterDetailDTO> GetDetailByIdAsync(int id, string identityUserId)
+		public async Task<IServiceResult<PrinterDetailDTO>> GetDetailByIdAsync(int id, string identityUserId)
 		{
-			// Получаем стандартные модели
-			var printer = await _printRepo.GetByIdAsync(id);
-			var model = await _modelService.GetByIdAsync(printer.PrintModelId);
-			var location = await _locationService.GetByIdAsync(printer.LocationId);
-			var oids = await _oidService.GetAllByModelAsync(printer.PrintModelId);
+			if (id <= 0) return ServiceResult<PrinterDetailDTO>.Failure("Неверный идентификатор принтера");
+			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<PrinterDetailDTO>.Failure("Неавторизованная операция");
+			var printer = await GetByIdAsync(id);
+			if (!printer.IsSuccess) return ServiceResult<PrinterDetailDTO>.Failure(printer.Message);
+			var oids = await _oidService.GetAllByModelAsync(printer.Data.ModelId);
+			if (!oids.IsSuccess) return ServiceResult<PrinterDetailDTO>.Failure(oids.Message);
+			var location = await _locationService.GetByIdAsync(printer.Data.LocationId);
+			if (!location.IsSuccess) return ServiceResult<PrinterDetailDTO>.Failure(location.Message);
+			var printModel = await _modelService.GetByIdAsync(printer.Data.ModelId);
+			if (!printModel.IsSuccess) return ServiceResult<PrinterDetailDTO>.Failure(printModel.Message);
 
-			// Формируем список oid для запроса SNMP
 			var oidsForSNMP = new List<Variable>();
-			foreach (var oid in oids)
+			foreach (var oid in oids.Data)
 			{
 				oidsForSNMP.Add(new(new ObjectIdentifier(oid.Value)));
 			}
-			var oidsResult = await _snmpService.GetOidsAsync(printer.IpAddress, oidsForSNMP);
-			// Получаем результаты по SNMP
+			var oidsResult = await _snmpService.GetOidsAsync(printer.Data.IpAddress, oidsForSNMP);
+			if (!oidsResult.IsSuccess) return ServiceResult<PrinterDetailDTO>.Failure(oidsResult.Message);
+			var oidDict = oids.Data.ToDictionary(o => o.Value, o => o.Title);
 			var oidsDTO = new List<OidDTO>();
-			// Собираем OidDTO
-			var oidDict = oids.ToDictionary(o => o.Value, o => o.Title);
-			foreach (var result in oidsResult)
+			foreach (var result in oidsResult.Data)
 			{
 				if (oidDict.TryGetValue(result.Id.ToString(), out var title))
 				{
@@ -213,46 +192,32 @@ namespace PrintStatus.BLL.Services
 					});
 				}
 			}
-
 			var detailPrinter = new PrinterDetailDTO()
 			{
-				Id = id,
-				Title = printer.Title,
-				IpAddress = printer.IpAddress,
-				LocationId = printer.LocationId,
-				ModelId = model.Id,
-				Location = location.Title,
-				Model = model.Title,
+				Id = printer.Data.Id,
+				Title = printer.Data.Title,
+				IpAddress = printer.Data.IpAddress,
+				LocationId = printer.Data.LocationId,
+				ModelId = printer.Data.ModelId,
+				Location = location.Data.Title,
+				Model = printModel.Data.Title,
 				PrintConsumables = oidsDTO
 			};
-			return detailPrinter;
+			return ServiceResult<PrinterDetailDTO>.Success(detailPrinter, "Данные получены");
 		}
-
-		public async Task<PrinterDTO> UpdateAsync(PrinterDTO printer, string identityUserId)
+		public async Task<IServiceResult<PrinterDTO>> UpdateAsync(PrinterDTO printerDTO, string identityUserId)
 		{
-			ArgumentNullException.ThrowIfNull(printer);
-
-			var editPrinter = await _printRepo.GetByIdAsync(printer.Id);
-			if (editPrinter != null)
-			{
-				editPrinter.Title = printer.Title;
-				editPrinter.IpAddress = printer.IpAddress;
-				editPrinter.PrintModelId = printer.ModelId;
-				editPrinter.LocationId = printer.LocationId;
-				//TODO Залоггировать выполнение операции
-				try
-				{
-					await _printRepo.UpdateAsync(editPrinter);
-					return printer;
-				}
-				catch (Exception ex)
-				{
-					//TODO Добавить обработку ошибок
-					Console.WriteLine(ex.Message);
-					return null;
-				}
-			}
-			return null;
+			if (printerDTO == null) return ServiceResult<PrinterDTO>.Failure("Неверный идентификатор принтера");
+			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<PrinterDTO>.Failure("Неавторизованная операция");
+			var userRoles = await _accountService.GetRolesAsync(identityUserId);
+			if (!userRoles.IsSuccess) return ServiceResult<PrinterDTO>.Failure("Неудалось получить роль пользователя");
+			if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<PrinterDTO>.Failure("Не достаточно прав для обновления принтера");
+			BasePrinter printer = _mapper.Map<BasePrinter>(printerDTO);
+			var resultUpdate = await _printRepo.UpdateAsync(printer);
+			if (!resultUpdate.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultUpdate.Message);
+			printerDTO = _mapper.Map<PrinterDTO>(resultUpdate.Data);
+			return ServiceResult<PrinterDTO>.Success(printerDTO, "Принтер обновлен");
 		}
 	}
+
 }
