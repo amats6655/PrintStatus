@@ -11,7 +11,6 @@ namespace PrintStatus.DAL.Connection
 		public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
 			: base(options)
 		{
-			ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.TrackAll;
 		}
 
 		protected override void OnModelCreating(ModelBuilder builder)
