@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PrintStatus.DAL\PrintStatus.DAL.csproj" />
-    <ProjectReference Include="..\PrintStatus.DOM\PrintStatus.DOM.csproj" />
   </ItemGroup>
 
 </Project>
