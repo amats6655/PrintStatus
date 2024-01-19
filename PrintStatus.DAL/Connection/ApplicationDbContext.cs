@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PrintStatus.DOM.Models;
 
 namespace PrintStatus.DAL.Connection
@@ -38,10 +37,10 @@ namespace PrintStatus.DAL.Connection
 				.HasMany(p => p.Histories)
 				.WithOne(p => p.PrintOid)
 				.OnDelete(DeleteBehavior.Cascade);
-			
+
 		}
 
-		public DbSet<BasePrinter> BasePrinters { get; set; } = null!;
+		public DbSet<BasePrinter> BasePrinters { get; set; }
 		public DbSet<History> Histories { get; set; }
 		public DbSet<Location> Locations { get; set; }
 		public DbSet<PrintModel> PrintModels { get; set; }

@@ -10,5 +10,6 @@ namespace PrintStatus.DOM.Interfaces
 		Task<IRepositoryResult<PrintOid>> UpdateAsync(PrintOid oid);
 		Task<IRepositoryResult<IEnumerable<PrintOid>>> GetAllAsync();
 		Task<IRepositoryResult<IEnumerable<PrintOid>>> GetAllByModelIdAsync(int modelId);
+		Task<IRepositoryResult<PrintOid>> GetByValueAsync(string value);
 	}
 }

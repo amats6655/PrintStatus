@@ -6,27 +6,22 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL.Services
 {
-	public class PrintModelManagementService : IPrintModelManagementService
+	public class PrintModelManagementService(
+											IPrintModelRepository printModelRepo,
+											IMapper mapper,
+											IAccountService accountService
+											) : IPrintModelManagementService
 	{
-		private readonly IPrintModelRepository _printModelRepo;
-		private readonly IMapper _mapper;
-		private readonly IAccountService _accountService;
-		public PrintModelManagementService(
-												IPrintModelRepository printModelRepo,
-												IMapper mapper,
-												IAccountService accountService
-											)
-		{
-			_printModelRepo = printModelRepo;
-			_mapper = mapper;
-			_accountService = accountService;
-		}
+		private readonly IPrintModelRepository _printModelRepo = printModelRepo;
+		private readonly IMapper _mapper = mapper;
+		private readonly IAccountService _accountService = accountService;
+
 		public async Task<IServiceResult<PrintModelDTO>> AddAsync(string modelTitle)
 		{
 			if (string.IsNullOrEmpty(modelTitle)) return ServiceResult<PrintModelDTO>.Failure("Неверный идентификатор модели");
 			var modelExist = await _printModelRepo.GetByModelNameAsync(modelTitle);
-			if (!modelExist.Errors.Any()) return ServiceResult<PrintModelDTO>.Failure(modelExist.Message);
-			if (modelExist.IsSuccess) return ServiceResult<PrintModelDTO>.Failure("Такое местоположение уже существует");
+			if (modelExist.Errors.Any()) return ServiceResult<PrintModelDTO>.Failure(modelExist.Message);
+			if (modelExist.IsSuccess) return ServiceResult<PrintModelDTO>.Success(_mapper.Map<PrintModelDTO>(modelExist.Data), "Такая модель уже существует");
 			var newPrintModel = new PrintModel { Title = modelTitle };
 			var addPrintModelResult = await _printModelRepo.AddAsync(newPrintModel);
 			if (!addPrintModelResult.IsSuccess) return ServiceResult<PrintModelDTO>.Failure(addPrintModelResult.Message);
@@ -37,9 +32,7 @@ namespace PrintStatus.BLL.Services
 		public async Task<IServiceResult<bool>> DeleteAsync(int id)
 		{
 			if (id <= 0) return ServiceResult<bool>.Failure("Неверный идентификатор модели");
-			var modelExist = await _printModelRepo.GetByIdAsync(id);
-			if (!modelExist.IsSuccess) return ServiceResult<bool>.Failure(modelExist.Message);
-			var resultDelete = await _printModelRepo.DeleteAsync(modelExist.Data);
+			var resultDelete = await _printModelRepo.DeleteAsync(id);
 			if (!resultDelete.IsSuccess) return ServiceResult<bool>.Failure(resultDelete.Message);
 			return ServiceResult<bool>.Success(true, resultDelete.Message);
 		}

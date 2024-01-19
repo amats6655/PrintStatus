@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Security.Cryptography;
+using AutoMapper;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Interfaces;
 using PrintStatus.DOM.Interfaces;
@@ -6,80 +7,70 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL.Services
 {
-	public class OidManagementService : IPrintOidManagementService
+	public class OidManagementService(
+									IPrintOidRepository oidRepository,
+									IMapper mapper,
+									IAccountService accountService
+									) : IPrintOidManagementService
 	{
-		private readonly IPrintOidRepository _oidRepo;
-		private readonly IMapper _map;
-		public OidManagementService
-									(
-										IPrintOidRepository oidRepository,
-										IMapper map
-									)
+		private readonly IPrintOidRepository _oidRepo = oidRepository;
+		private readonly IMapper _mapper = mapper;
+		private readonly IAccountService _accountService = accountService;
+
+		public async Task<IServiceResult<OidDTO>> AddAsync(OidDTO oid)
 		{
-			_oidRepo = oidRepository;
-			_map = map;
-		}
-		public async Task<OidDTO> AddAsync(OidDTO oid)
-		{
-			ArgumentNullException.ThrowIfNull(oid);
-			var oidExists = await _oidRepo.GetByIdAsync(oid.Id);
-			if (oidExists == null)
-			{
-				var newOid = _map.Map<PrintOid>(oid);
-				var resultAdd = await _oidRepo.AddAsync(newOid);
-				if (resultAdd != null) return _map.Map<OidDTO>(resultAdd);
-			}
-			//TODO Добавить обработку null
-			return null;
+			if (oid == null || string.IsNullOrEmpty(oid.Value)) return ServiceResult<OidDTO>.Failure("Неверный идентификатор Oid");
+			var oidExist = await _oidRepo.GetByValueAsync(oid.Value);
+			if (oidExist.Errors.Any()) return ServiceResult<OidDTO>.Failure(oidExist.Message);
+			if (oidExist.IsSuccess) return ServiceResult<OidDTO>.Failure("Такой oid уже существует");
+			var newOid = _mapper.Map<PrintOid>(oid);
+			var addOidResult = await _oidRepo.AddAsync(newOid);
+			if (!addOidResult.IsSuccess) return ServiceResult<OidDTO>.Failure(addOidResult.Message);
+			var result = _mapper.Map<OidDTO>(addOidResult.Data);
+			return ServiceResult<OidDTO>.Success(result, addOidResult.Message);
 		}
 
-		public async Task<bool> DeleteAsync(int oidId)
+		public async Task<IServiceResult<bool>> DeleteAsync(int oidId)
 		{
-			if (oidId != 0)
-			{
-				var oidExists = await _oidRepo.GetByIdAsync(oidId);
-				if (oidExists != null) return await _oidRepo.DeleteAsync(oidExists);
-			}
-			return false;
+			if (oidId <= 0) return ServiceResult<bool>.Failure("Неверный идентификатор Oid");
+			var resultDelete = await _oidRepo.DeleteAsync(oidId);
+			if (!resultDelete.IsSuccess) return ServiceResult<bool>.Failure(resultDelete.Message);
+			return ServiceResult<bool>.Success(true, resultDelete.Message);
 		}
 
-		public async Task<IEnumerable<OidDTO>> GetAllByModelAsync(int modelId)
+		public async Task<IServiceResult<IEnumerable<OidDTO>>> GetAllByModelAsync(int modelId)
 		{
+			var oids = await _oidRepo.GetAllAsync();
+			if(!oids.IsSuccess) return ServiceResult<IEnumerable<OidDTO>>.Failure(oids.Message);
 			var result = new List<OidDTO>();
-			if (modelId != 0)
+			foreach(var oid in oids.Data)
 			{
-				var dataOids = await _oidRepo.GetAllByModelIdAsync(modelId);
-				if (dataOids.Any())
-				{
-					foreach (var oid in dataOids)
-					{
-						result.Add(_map.Map<OidDTO>(oid));
-					}
-				}
+				result.Add(_mapper.Map<OidDTO>(oid));
 			}
-			return result;
+			return ServiceResult<IEnumerable<OidDTO>>.Success(result, oids.Message);
 		}
 
-		public async Task<OidDTO> GetByIdAsync(int id)
+		public async Task<IServiceResult<OidDTO>> GetByIdAsync(int id)
 		{
-			var result = await _oidRepo.GetByIdAsync(id)
-				?? throw new ArgumentException("Не удалось найти этот объект");
-			return _map.Map<OidDTO>(result);
+			if(id <= 0) return ServiceResult<OidDTO>.Failure("Неверный идентификатор");
+			var oid = await _oidRepo.GetByIdAsync(id);
+			if(!oid.IsSuccess) return ServiceResult<OidDTO>.Failure(oid.Message);
+			var result = _mapper.Map<OidDTO>(oid.Data);
+			return ServiceResult<OidDTO>.Success(result, oid.Message);
 		}
 
-		public async Task<OidDTO> UpdateAsync(OidDTO oid)
+		public async Task<IServiceResult<OidDTO>> UpdateAsync(OidDTO oid, string identityUserId)
 		{
-			ArgumentException.ThrowIfNullOrEmpty(nameof(oid));
-			var oidExist = await _oidRepo.GetByIdAsync(oid.Id);
-			if (oidExist != null)
-			{
-				oidExist.Title = oid.Title;
-				oidExist.Value = oid.Value;
-				oidExist.PollingDate = oid.PollingDate;
-				var resultUpdate = await _oidRepo.UpdateAsync(oidExist);
-				return _map.Map<OidDTO>(resultUpdate);
-			}
-			return null;
+			if(oid == null) return ServiceResult<OidDTO>.Failure("Неверный идентификатор");
+			if(string.IsNullOrEmpty(identityUserId)) return ServiceResult<OidDTO>.Failure("Неавторизованная операция");
+			var userRoles = await _accountService.GetRolesAsync(identityUserId);
+			if(!userRoles.IsSuccess) return ServiceResult<OidDTO>.Failure("Неудалось получить роль пользователя");
+			if(!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<OidDTO>.Failure("Недостаточно прав для обновления oid");
+			PrintOid printOid = _mapper.Map<PrintOid>(oid);
+			var resultUpdate = await _oidRepo.UpdateAsync(printOid);
+			if(!resultUpdate.IsSuccess) return ServiceResult<OidDTO>.Failure(resultUpdate.Message);
+			oid = _mapper.Map<OidDTO>(resultUpdate.Data);
+			return ServiceResult<OidDTO>.Success(oid, resultUpdate.Message);
 		}
 	}
 }

@@ -1,5 +1,4 @@
-﻿using PrintStatus.BLL.DTO;
-using PrintStatus.DOM.Models;
+﻿using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL.Interfaces
 {
@@ -7,6 +6,7 @@ namespace PrintStatus.BLL.Interfaces
 	{
 		Task<IServiceResult<bool>> AddHistory(History history);
 		Task<IServiceResult<History>> GetById(int id);
-		Task<IServiceResult<IEnumerable<History>>> GetAllByPrinterId(int PrinterId);
+		Task<IServiceResult<IEnumerable<History>>> GetAllByPrinterId(int printerId);
+		Task<IServiceResult<IEnumerable<History>>> GetAllHistories();
 	}
 }

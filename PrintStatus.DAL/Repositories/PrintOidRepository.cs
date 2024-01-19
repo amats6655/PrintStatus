@@ -63,7 +63,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.Oids.FindAsync(id);
-				if (result == null) return RepositoryResult<PrintOid>.Failure(new List<string> {""},  $"Не удалось найти Oid с id = {id}" );
+				if (result == null) return RepositoryResult<PrintOid>.Failure(new List<string>(), $"Не удалось найти Oid с id = {id}");
 				return RepositoryResult<PrintOid>.Success(result, "Oid найден");
 			}
 			catch (Exception ex)
@@ -105,6 +105,21 @@ namespace PrintStatus.DAL.Repositories
 			catch (Exception ex)
 			{
 				return new RepositoryResult<IEnumerable<PrintOid>>().HandleException(ex);
+			}
+		}
+
+		public async Task<IRepositoryResult<PrintOid>> GetByValueAsync(string value)
+		{
+			if (string.IsNullOrEmpty(value)) return new RepositoryResult<PrintOid>().HandleException(new ArgumentNullException(nameof(value))); ;
+			try
+			{
+				var result = await _context.Oids.Where(v => v.Value.Equals(value)).FirstOrDefaultAsync();
+				if (result == null) return RepositoryResult<PrintOid>.Failure(new List<string>(), $"Не удалось найти Oid с value = {value}");
+				return RepositoryResult<PrintOid>.Success(result, "Oid найден");
+			}
+			catch (Exception ex)
+			{
+				return new RepositoryResult<PrintOid>().HandleException(ex);
 			}
 		}
 	}

@@ -5,15 +5,11 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL.Services
 {
-	public class HistoryManagementService : IHistoryManagementService
+	public class HistoryManagementService(IHistoryRepository historyRepo) : IHistoryManagementService
 	{
-		private readonly IHistoryRepository _historyRepo;
-		public HistoryManagementService(IHistoryRepository historyRepo)
-		{
-			_historyRepo = historyRepo;
-		}
+		private readonly IHistoryRepository _historyRepo = historyRepo;
 
-		public async Task<IServiceResult<bool>> AddHistory(History history)
+        public async Task<IServiceResult<bool>> AddHistory(History history)
 		{
 			if (history == null) return ServiceResult<bool>.Failure("Неверный идентификатор истории");
 			history.Date = DateTime.UtcNow;

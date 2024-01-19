@@ -6,25 +6,17 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL.Services
 {
-	public class LocationManagementService : ILocationManagementService
+	public class LocationManagementService(
+                                        ILocationRepository locationRepo,
+                                        IMapper mapper,
+                                        IAccountService accountService
+                                        ) : ILocationManagementService
 	{
-		private readonly ILocationRepository _locationRepo;
-		private readonly IMapper _mapper;
-		private readonly IAccountService _accountService;
+		private readonly ILocationRepository _locationRepo = locationRepo;
+		private readonly IMapper _mapper = mapper;
+		private readonly IAccountService _accountService = accountService;
 
-		public LocationManagementService
-										(
-											ILocationRepository locationRepo,
-											IMapper mapper,
-											IAccountService accountService
-										)
-		{
-			_mapper = mapper;
-			_locationRepo = locationRepo;
-			_accountService = accountService;
-		}
-
-		public async Task<IServiceResult<LocationDTO>> AddAsync(LocationDTO location)
+        public async Task<IServiceResult<LocationDTO>> AddAsync(LocationDTO location)
 		{
 			if (location == null) return ServiceResult<LocationDTO>.Failure("Неверный идентификатор местоположения");
 			var locationExist = await _locationRepo.GetByTitleAsync(location.Title);
@@ -41,9 +33,7 @@ namespace PrintStatus.BLL.Services
 		public async Task<IServiceResult<bool>> DeleteAsync(int id)
 		{
 			if (id <= 0) return ServiceResult<bool>.Failure("Неверный идентификатор местоположения");
-			var locationExist = await _locationRepo.GetByIdAsync(id);
-			if (locationExist.Errors.Any()) return ServiceResult<bool>.Failure(locationExist.Message);
-			var resultDelete = await _locationRepo.DeleteAsync(locationExist.Data);
+			var resultDelete = await _locationRepo.DeleteAsync(id);
 			if (!resultDelete.IsSuccess) return ServiceResult<bool>.Failure(resultDelete.Message);
 			return ServiceResult<bool>.Success(true, resultDelete.Message);
 		}

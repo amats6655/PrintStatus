@@ -5,18 +5,16 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL;
 
-public class UserService : IUserService
+public class UserService(
+							UserManager<IdentityUser> userManager, 
+							RoleManager<IdentityRole> roleManager, 
+							IUserProfileRepository userRepo
+						) : IUserService
 {
-	private readonly UserManager<IdentityUser> _userManager;
-	private readonly RoleManager<IdentityRole> _roleManager;
-	private readonly IUserProfileRepository _userRepo;
-	public UserService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IUserProfileRepository userRepo)
-	{
-		_roleManager = roleManager;
-		_userManager = userManager;
-		_userRepo = userRepo;
-	}
-	
+	private readonly UserManager<IdentityUser> _userManager = userManager;
+	private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+	private readonly IUserProfileRepository _userRepo = userRepo;
+
 	public async Task<IdentityResult> AddUserAsync(string userName, string password)
 	{
 		var user = new IdentityUser { UserName = userName};

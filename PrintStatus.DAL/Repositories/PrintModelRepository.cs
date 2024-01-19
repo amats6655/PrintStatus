@@ -31,11 +31,12 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-		public async Task<IRepositoryResult<bool>> DeleteAsync(PrintModel model)
+		public async Task<IRepositoryResult<bool>> DeleteAsync(int id)
 		{
-			if (model == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(model)));
-			var modelExist = await _context.PrintModels.FindAsync(model.Id);
+			if (id <= 0) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(id)));
+			var modelExist = await _context.PrintModels.Include(p => p.Printers).FirstOrDefaultAsync(p => p.Id == id);
 			if (modelExist == null) return RepositoryResult<bool>.Failure(new List<string>(),  "Модель не найдена");
+			if (modelExist.Printers == null) return RepositoryResult<bool>.Failure(new List<string>(), "Неудалось получить список связанных принтеров");
 			if (modelExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string>(), "Невозможно удалить модель, так как существуют связанные принтеры");
 			try
 			{

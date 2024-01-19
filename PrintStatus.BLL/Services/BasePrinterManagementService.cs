@@ -7,38 +7,27 @@ using PrintStatus.DOM.Models;
 
 namespace PrintStatus.BLL.Services
 {
-	public class BasePrinterManagementService : IBasePrinterManagementService
+	public class BasePrinterManagementService(
+                                            IBasePrinterRepository printRepo,
+                                            IPrintModelManagementService modelService,
+                                            ILocationManagementService locationService,
+                                            IPrintOidManagementService oidService,
+                                            IUserProfileRepository profileRepo,
+                                            ISnmpService snmpService,
+                                            IMapper mapper,
+                                            IAccountService accountService
+                                            ) : IBasePrinterManagementService
 	{
-		private readonly IBasePrinterRepository _printRepo;
-		private readonly IPrintModelManagementService _modelService;
-		private readonly ILocationManagementService _locationService;
-		private readonly IPrintOidManagementService _oidService;
-		private readonly IUserProfileRepository _profileRepo;
-		private readonly ISnmpService _snmpService;
-		private readonly IMapper _mapper;
-		private readonly IAccountService _accountService;
-		public BasePrinterManagementService(
-												IBasePrinterRepository printRepo,
-												IPrintModelManagementService modelService,
-												ILocationManagementService locationService,
-												IPrintOidManagementService oidService,
-												IUserProfileRepository profileRepo,
-												ISnmpService snmpService,
-												IMapper mapper,
-												IAccountService accountService
-											)
-		{
-			_printRepo = printRepo;
-			_modelService = modelService;
-			_locationService = locationService;
-			_oidService = oidService;
-			_profileRepo = profileRepo;
-			_snmpService = snmpService;
-			_mapper = mapper;
-			_accountService = accountService;
-		}
+		private readonly IBasePrinterRepository _printRepo = printRepo;
+		private readonly IPrintModelManagementService _modelService = modelService;
+		private readonly ILocationManagementService _locationService = locationService;
+		private readonly IPrintOidManagementService _oidService = oidService;
+		private readonly IUserProfileRepository _profileRepo = profileRepo;
+		private readonly ISnmpService _snmpService = snmpService;
+		private readonly IMapper _mapper = mapper;
+		private readonly IAccountService _accountService = accountService;
 
-		public async Task<IServiceResult<PrinterDTO>> AddAsync(NewPrinterDTO printer)
+        public async Task<IServiceResult<PrinterDTO>> AddAsync(NewPrinterDTO printer)
 		{
 			if (printer == null) return ServiceResult<PrinterDTO>.Failure("Неверный идентификатор принтера");
 			var snmpResult = await _snmpService.GetModelAndSerialNumAsync(printer.IpAddress);
@@ -48,7 +37,7 @@ namespace PrintStatus.BLL.Services
 			var printerExist = await _printRepo.GetBySerialNumberAsync(snmpResult.Data["SerialNumber"]);
 			if (printerExist.Errors.Any()) return ServiceResult<PrinterDTO>.Failure(printerExist.Message);
 			PrinterDTO newPrinterDTO;
-			if (printerExist.IsSuccess)
+			if (!printerExist.IsSuccess)
 			{
 				var printModel = await _modelService.AddAsync(snmpResult.Data["Model"]);
 				if (!printModel.IsSuccess) return ServiceResult<PrinterDTO>.Failure(printModel.Message);
@@ -67,6 +56,7 @@ namespace PrintStatus.BLL.Services
 			}
 			else
 			{
+				if (printerExist.Data.UserProfiles.Where(u => u.Id == userProfile.Data.Id).Any()) return ServiceResult<PrinterDTO>.Failure("Проверь свое зрение. Этот принтер у тебя уже есть!");
 				printerExist.Data.UserProfiles.Add(userProfile.Data);
 				var resultUpdate = await _printRepo.UpdateAsync(printerExist.Data);
 				if (!resultUpdate.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultUpdate.Message);
@@ -79,20 +69,20 @@ namespace PrintStatus.BLL.Services
 		{
 			if (id <= 0) return ServiceResult<bool>.Failure("Неверный идентификатор притентера");
 			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<bool>.Failure("Неавторизованная операция");
-			var deletedPrinter = await _printRepo.GetByIdAsync(id);
-			if (!deletedPrinter.IsSuccess) return ServiceResult<bool>.Failure(deletedPrinter.Message);
+			var printerExist = await _printRepo.GetByIdAsync(id);
+			if (!printerExist.IsSuccess) return ServiceResult<bool>.Failure(printerExist.Message);
 			var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
 			if (!userProfile.IsSuccess) return ServiceResult<bool>.Failure(userProfile.Message);
 
-			deletedPrinter.Data.UserProfiles.Remove(userProfile.Data);
-			var removePrinterFromUser = await _printRepo.UpdateAsync(deletedPrinter.Data);
+			printerExist.Data.UserProfiles.Remove(userProfile.Data);
+			var removePrinterFromUser = await _printRepo.UpdateAsync(printerExist.Data);
 			if (!removePrinterFromUser.IsSuccess) return ServiceResult<bool>.Failure(removePrinterFromUser.Message);
 			if (removePrinterFromUser.Data.UserProfiles.Count >= 1) return ServiceResult<bool>.Success(true, "Принтер удален");
 			else
 			{
-				var resultDeletePrinter = await _printRepo.DeleteAsync(removePrinterFromUser.Data);
+				var resultDeletePrinter = await _printRepo.DeleteAsync(id);
 				if (!resultDeletePrinter.IsSuccess) return ServiceResult<bool>.Failure(resultDeletePrinter.Message);
-				return ServiceResult<bool>.Success(true, "Принтер удален");
+				return ServiceResult<bool>.Success(true, resultDeletePrinter.Message);
 			}
 		}
 
@@ -146,7 +136,7 @@ namespace PrintStatus.BLL.Services
 			{
 				result.Add(_mapper.Map<PrinterDTO>(printer));
 			}
-			return ServiceResult<IEnumerable<PrinterDTO>>.Success(result, "Принтеры получены");
+			return ServiceResult<IEnumerable<PrinterDTO>>.Success(result, printers.Message);
 		}
 
 		public async Task<IServiceResult<PrinterDTO>> GetByIdAsync(int id)
@@ -155,7 +145,7 @@ namespace PrintStatus.BLL.Services
 			var printer = await _printRepo.GetByIdAsync(id);
 			if (!printer.IsSuccess) return ServiceResult<PrinterDTO>.Failure(printer.Message);
 			var result = _mapper.Map<PrinterDTO>(printer);
-			return ServiceResult<PrinterDTO>.Success(result, "Принтер получен");
+			return ServiceResult<PrinterDTO>.Success(result, printer.Message);
 		}
 
 		public async Task<IServiceResult<PrinterDetailDTO>> GetDetailByIdAsync(int id, string identityUserId)
@@ -211,7 +201,7 @@ namespace PrintStatus.BLL.Services
 			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<PrinterDTO>.Failure("Неавторизованная операция");
 			var userRoles = await _accountService.GetRolesAsync(identityUserId);
 			if (!userRoles.IsSuccess) return ServiceResult<PrinterDTO>.Failure("Неудалось получить роль пользователя");
-			if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<PrinterDTO>.Failure("Не достаточно прав для обновления принтера");
+			if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<PrinterDTO>.Failure("Недостаточно прав для обновления принтера");
 			BasePrinter printer = _mapper.Map<BasePrinter>(printerDTO);
 			var resultUpdate = await _printRepo.UpdateAsync(printer);
 			if (!resultUpdate.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultUpdate.Message);

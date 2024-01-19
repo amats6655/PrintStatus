@@ -7,8 +7,8 @@ namespace PrintStatus.DOM.Interfaces
 		Task<IRepositoryResult<Location>> GetByIdAsync(int id);
 		Task<IRepositoryResult<IEnumerable<Location>>> GetAllAsync();
 		Task<IRepositoryResult<Location>> AddAsync(Location location);
-		Task<IRepositoryResult<bool>> DeleteAsync(Location location);
+		Task<IRepositoryResult<bool>> DeleteAsync(int id);
 		Task<IRepositoryResult<Location>> UpdateAsync(Location location);
-		Task<IRepositoryResult<Location>> GetByTitle(string Title);
+		Task<IRepositoryResult<Location>> GetByTitleAsync(string Title);
 	}
 }

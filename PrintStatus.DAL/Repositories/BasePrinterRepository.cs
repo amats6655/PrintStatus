@@ -16,7 +16,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (printer == null) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(printer)));
 			var printerExist = await _context.BasePrinters.AnyAsync(p => p.SerialNumber == printer.SerialNumber);
-			if (printerExist) return RepositoryResult<BasePrinter>.Failure(new List<string> {""},  $"Принтер {printer.SerialNumber} уже существует" );
+			if (printerExist) return RepositoryResult<BasePrinter>.Failure(new List<string> { "" }, $"Принтер {printer.SerialNumber} уже существует");
 			try
 			{
 				await _context.BasePrinters.AddAsync(printer);
@@ -29,14 +29,14 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-		public async Task<IRepositoryResult<bool>> DeleteAsync(BasePrinter printer)
+		public async Task<IRepositoryResult<bool>> DeleteAsync(int id)
 		{
-			if (printer == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(printer)));
-			var printerExist = await _context.BasePrinters.FindAsync(printer.Id);
-			if (printerExist == null) return RepositoryResult<bool>.Failure(new List<string> {""}, $"Принтер {printer.Id} не найден" );
+			if (id <= 0) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(id)));
+			var printerExist = await _context.BasePrinters.FindAsync(id);
+			if (printerExist == null) return RepositoryResult<bool>.Failure(new List<string> { "" }, $"Принтер {id} не найден");
 			try
 			{
-				_context.BasePrinters.Remove(printer);
+				_context.BasePrinters.Remove(printerExist);
 				await _context.SaveChangesAsync();
 				return RepositoryResult<bool>.Success(true, "Принтер удален");
 			}
@@ -129,7 +129,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.BasePrinters.FindAsync(id);
-				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с id = {id}" );
+				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с id = {id}");
 				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
 			catch (Exception ex)
@@ -141,16 +141,16 @@ namespace PrintStatus.DAL.Repositories
 		public async Task<IRepositoryResult<BasePrinter>> GetBySerialNumberAsync(string serialNumber)
 		{
 			if (string.IsNullOrEmpty(serialNumber)) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(serialNumber)));
-			ArgumentException.ThrowIfNullOrEmpty(nameof(serialNumber));
 			try
 			{
 				var result = await _context.BasePrinters
+								.Include(p => p.UserProfiles)
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
 								.Where(p => p.SerialNumber
 									.Equals(serialNumber))
 								.FirstOrDefaultAsync();
-				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с серийным номером = {serialNumber}" );
+				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с серийным номером = {serialNumber}");
 				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
 			catch (Exception ex)
@@ -163,7 +163,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (printer == null) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(printer)));
 			var printerExist = await _context.BasePrinters.FindAsync(printer.Id);
-			if (printerExist == null) return RepositoryResult<BasePrinter>.Failure(new List<string> {""}, "Не найден изменяемый объект" );
+			if (printerExist == null) return RepositoryResult<BasePrinter>.Failure(new List<string> { "" }, "Не найден изменяемый объект");
 			try
 			{
 				printerExist.Title = printer.Title;

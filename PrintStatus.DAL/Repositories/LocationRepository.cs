@@ -30,12 +30,13 @@ namespace PrintStatus.DAL.Repositories
 
 		}
 
-		public async Task<IRepositoryResult<bool>> DeleteAsync(Location location)
+		public async Task<IRepositoryResult<bool>> DeleteAsync(int id)
 		{
-			if (location == null) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(location)));
-			var locationExist = await _context.Locations.FindAsync(location.Id);
-			if (locationExist == null) return RepositoryResult<bool>.Failure(new List<string>(), $"Местоположение {location.Title} не найдено");
-			if (locationExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string>(), "Невозможно удалить местоположение, так как существуют связанные принтеры");
+			if (id <= 0) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(id)));
+			var locationExist = await _context.Locations.Include(p => p.Printers).FirstOrDefaultAsync(l => l.Id == id);
+			if (locationExist == null) return RepositoryResult<bool>.Failure(new List<string>(), $"Местоположение {id} не найдено");
+			if (locationExist.Printers == null) return RepositoryResult<bool>.Failure(new List<string>(), "Неудалось получить список связанных принтеров");
+			if (locationExist.Printers.Count > 0) return RepositoryResult<bool>.Failure(new List<string>(), "Невозможно удалить местоположение, так как существуют связанные принтеры");
 			try
 			{
 				_context.Remove(locationExist);
@@ -67,7 +68,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.Locations.FindAsync(id);
-				if (result == null) return RepositoryResult<Location>.Failure(new List<string> {""}, $"Не удалось найти местоположение с id = {id}" );
+				if (result == null) return RepositoryResult<Location>.Failure(new List<string> { "" }, $"Не удалось найти местоположение с id = {id}");
 				return RepositoryResult<Location>.Success(result, "Местоположение получено");
 			}
 			catch (Exception ex)
@@ -76,7 +77,7 @@ namespace PrintStatus.DAL.Repositories
 			}
 		}
 
-		public async Task<IRepositoryResult<Location>> GetByTitle(string title)
+		public async Task<IRepositoryResult<Location>> GetByTitleAsync(string title)
 		{
 			if (string.IsNullOrEmpty(title)) return new RepositoryResult<Location>().HandleException(new ArgumentNullException(nameof(title)));
 			try
@@ -84,7 +85,7 @@ namespace PrintStatus.DAL.Repositories
 				var result = await _context.Locations
 									.Where(l => l.Title.Equals(title))
 									.FirstOrDefaultAsync();
-				if (result == null) return RepositoryResult<Location>.Failure(new List<string> {""}, $"Не удалось найти местоволожение с названием " );
+				if (result == null) return RepositoryResult<Location>.Failure(new List<string> { "" }, $"Не удалось найти местоволожение с названием ");
 				return RepositoryResult<Location>.Success(result, "Данные получены");
 			}
 			catch (Exception ex)
@@ -97,7 +98,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (location == null) return new RepositoryResult<Location>().HandleException(new ArgumentNullException(nameof(location)));
 			var locationExist = await _context.Locations.FindAsync(location.Id);
-			if (locationExist == null) return RepositoryResult<Location>.Failure(new List<string> {""}, $"Не найден изменяемый объект" );
+			if (locationExist == null) return RepositoryResult<Location>.Failure(new List<string> { "" }, $"Не найден изменяемый объект");
 			try
 			{
 				locationExist.Title = location.Title;

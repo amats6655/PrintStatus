@@ -1,55 +1,72 @@
 ﻿using System.Net;
+using System.Net.NetworkInformation;
 using Lextm.SharpSnmpLib;
 using Lextm.SharpSnmpLib.Messaging;
+using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Interfaces;
 
 namespace PrintStatus.BLL.Services
 {
-    public class SnmpService : ISnmpService
-    {
-        const int PORT = 161;
-        internal Variable SerialNumber = new(new ObjectIdentifier("1.3.6.1.2.1.43.5.1.1.17.1"));
-        internal Variable Model = new(new ObjectIdentifier("1.3.6.1.2.1.25.3.2.1.3.1"));
-        public SnmpService()
-        {
+	public class SnmpService : ISnmpService
+	{
+		private const int PORT = 161;
+		private Variable SerialNumber = new(new ObjectIdentifier("1.3.6.1.2.1.43.5.1.1.17.1"));
+		private Variable Model = new(new ObjectIdentifier("1.3.6.1.2.1.25.3.2.1.3.1"));
 
-        }
-        public async Task<Dictionary<string, string>> GetModelAndSerialNumAsync(string ipAddress)
-        {
-            var Result = new Dictionary<string, string>();
-            var baseoids = new List<Variable>() { Model, SerialNumber };
-            try
-            {
-                var value = await Messenger.GetAsync(VersionCode.V2,
-                                new IPEndPoint(IPAddress.Parse(ipAddress), PORT),
-                                new OctetString("public"),
-                                baseoids);
-                Result.Add("Model", value[0].Data.ToString());
-                Result.Add("SerialNumber", value[1].Data.ToString());
-            }
-            catch (Exception ex)
-            {
-                //TODO Написать обработчик ошибок
-                Console.WriteLine(ex.Message);
-            }
-            return Result;
-        }
+		//public async Task<List<Variable>> GetOidsAsync(string ipAddress, List<Variable> oids)
+		//{
+		//    try
+		//    {
+		//        return await Messenger.GetAsync(VersionCode.V2,
+		//                    new IPEndPoint(IPAddress.Parse(ipAddress), PORT),
+		//                    new OctetString("public"),
+		//                    oids) as List<Variable>;
+		//    }
+		//    catch (Exception ex)
+		//    {
+		//        //TODO Написать обработчик ошибок
+		//        Console.WriteLine(ex.Message);
+		//        return new List<Variable>();
+		//    }
+		//}
 
-        public async Task<List<Variable>> GetOidsAsync(string ipAddress, List<Variable> oids)
-        {
-            try
-            {
-                return await Messenger.GetAsync(VersionCode.V2,
-                            new IPEndPoint(IPAddress.Parse(ipAddress), PORT),
-                            new OctetString("public"),
-                            oids) as List<Variable>;
-            }
-            catch (Exception ex)
-            {
-                //TODO Написать обработчик ошибок
-                Console.WriteLine(ex.Message);
-                return new List<Variable>();
-            }
-        }
-    }
+		public async Task<IServiceResult<Dictionary<string, string>>> GetModelAndSerialNumAsync(string ipAddress)
+		{
+			if (string.IsNullOrEmpty(ipAddress)) return ServiceResult<Dictionary<string, string>>.Failure("Неверный ip адрес");
+			try
+			{
+				IPAddress address = IPAddress.Parse(ipAddress);
+			}
+			catch
+			{
+				return ServiceResult<Dictionary<string, string>>.Failure("Неверный формат адреса");
+			}
+			using var ping = new Ping();
+			PingReply pingRes = await ping.SendPingAsync(ipAddress, 100);
+			if (pingRes.Status != IPStatus.Success) return ServiceResult<Dictionary<string, string>>.Failure("Принтер недоступен");
+			var result = new Dictionary<string, string>();
+			var baseOids = new List<Variable>() { Model, SerialNumber };
+			try
+			{
+				var value = await Messenger.GetAsync(VersionCode.V2,
+				new IPEndPoint(IPAddress.Parse(ipAddress), PORT),
+				new OctetString("public"),
+				baseOids);
+				result.Add("Model", value[0].Data.ToString());
+				result.Add("SerialNumber", value[1].Data.ToString());
+			}
+			catch (Exception ex)
+			{
+				return ServiceResult<Dictionary<string, string>>.Failure($"{ex.Message}");
+			}
+			if (result.Count != 2) return ServiceResult<Dictionary<string, string>>.Failure("Не удалось получить инфомрацию от принтера");
+			return ServiceResult<Dictionary<string, string>>.Success(result);
+
+		}
+
+		public async Task<IServiceResult<IEnumerable<Variable>>> GetOidsAsync(string ipAddress, List<Variable> oids)
+		{
+			throw new NotImplementedException();
+		}
+	}
 }
