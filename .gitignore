@@ -62,6 +62,6 @@ Thumbs.db
 project.lock.json
 project.fragment.lock.json
 artifacts/
-**/Properties/launchSettings.json
 /PrintStatus.DAL/Migrations/
 cspell.json
+/PrintStatus.AUTH/keys/
