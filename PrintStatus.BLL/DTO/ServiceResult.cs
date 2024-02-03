@@ -17,7 +17,7 @@ namespace PrintStatus.BLL.DTO
 			return new ServiceResult<T> { IsSuccess = false, Message = message };
 		}
 	}
-	
+
 
 }
 

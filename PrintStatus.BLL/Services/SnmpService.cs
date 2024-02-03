@@ -33,9 +33,10 @@ namespace PrintStatus.BLL.Services
 		public async Task<IServiceResult<Dictionary<string, string>>> GetModelAndSerialNumAsync(string ipAddress)
 		{
 			if (string.IsNullOrEmpty(ipAddress)) return ServiceResult<Dictionary<string, string>>.Failure("Неверный ip адрес");
+			IPAddress address;
 			try
 			{
-				IPAddress address = IPAddress.Parse(ipAddress);
+				address = IPAddress.Parse(ipAddress);
 			}
 			catch
 			{
@@ -49,9 +50,9 @@ namespace PrintStatus.BLL.Services
 			try
 			{
 				var value = await Messenger.GetAsync(VersionCode.V2,
-				new IPEndPoint(IPAddress.Parse(ipAddress), PORT),
-				new OctetString("public"),
-				baseOids);
+							new IPEndPoint(address, PORT),
+							new OctetString("public"),
+							baseOids);
 				result.Add("Model", value[0].Data.ToString());
 				result.Add("SerialNumber", value[1].Data.ToString());
 			}
@@ -59,14 +60,45 @@ namespace PrintStatus.BLL.Services
 			{
 				return ServiceResult<Dictionary<string, string>>.Failure($"{ex.Message}");
 			}
-			if (result.Count != 2) return ServiceResult<Dictionary<string, string>>.Failure("Не удалось получить инфомрацию от принтера");
+			if (result.Count != 2) return ServiceResult<Dictionary<string, string>>.Failure("Не удалось получить информацию от принтера");
 			return ServiceResult<Dictionary<string, string>>.Success(result);
 
 		}
 
 		public async Task<IServiceResult<IEnumerable<Variable>>> GetOidsAsync(string ipAddress, List<Variable> oids)
 		{
-			throw new NotImplementedException();
+			if (string.IsNullOrEmpty(ipAddress)) return ServiceResult<IEnumerable<Variable>>.Failure("Неверный ip адрес");
+			if (oids.Count == 0) return ServiceResult<IEnumerable<Variable>>.Failure("Пустой список Oid");
+			IPAddress address;
+			try
+			{
+				address = IPAddress.Parse(ipAddress);
+			}
+			catch
+			{
+				return ServiceResult<IEnumerable<Variable>>.Failure("Неверный формат адреса");
+			}
+			using var ping = new Ping();
+			PingReply pingRes = await ping.SendPingAsync(ipAddress, 100);
+			if (pingRes.Status != IPStatus.Success) return ServiceResult<IEnumerable<Variable>>.Failure("Принтер недоступен");
+			var result = new List<Variable>();
+			try
+			{
+				var values = await Messenger.GetAsync(VersionCode.V2,
+							new IPEndPoint(address, PORT),
+							new OctetString("public"),
+							oids);
+				for (int i = 0; i < values.Count; i++)
+				{
+					result.Add(values[i]);
+				}
+			}
+			catch (Exception ex)
+			{
+				return ServiceResult<IEnumerable<Variable>>.Failure(ex.Message);
+			}
+			if (result.Count == 0) return ServiceResult<IEnumerable<Variable>>.Failure("Не удалось получить информацию от принтера");
+			return ServiceResult<IEnumerable<Variable>>.Success(result);
 		}
 	}
 }

@@ -35,7 +35,7 @@ namespace PrintStatus.DAL.Repositories
 		{
 			if (id <= 0) return new RepositoryResult<bool>().HandleException(new ArgumentNullException(nameof(id)));
 			var modelExist = await _context.PrintModels.Include(p => p.Printers).FirstOrDefaultAsync(p => p.Id == id);
-			if (modelExist == null) return RepositoryResult<bool>.Failure(new List<string>(),  "Модель не найдена");
+			if (modelExist == null) return RepositoryResult<bool>.Failure(new List<string>(), "Модель не найдена");
 			if (modelExist.Printers == null) return RepositoryResult<bool>.Failure(new List<string>(), "Неудалось получить список связанных принтеров");
 			if (modelExist.Printers.Count != 0) return RepositoryResult<bool>.Failure(new List<string>(), "Невозможно удалить модель, так как существуют связанные принтеры");
 			try
@@ -68,7 +68,10 @@ namespace PrintStatus.DAL.Repositories
 			if (id <= 0) return new RepositoryResult<PrintModel>().HandleException(new ArgumentNullException(nameof(id)));
 			try
 			{
-				var result = await _context.PrintModels.FindAsync(id);
+				var result = await _context.PrintModels
+											.Include(p => p.Oids)
+											.Where(p => p.Id == id)
+											.FirstOrDefaultAsync();
 				if (result == null) return RepositoryResult<PrintModel>.Failure(new List<string>(), $"Не удалось найти модель с id = {id}");
 				return RepositoryResult<PrintModel>.Success(result, "Модель найдена");
 			}

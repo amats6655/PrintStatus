@@ -1,55 +1,37 @@
-﻿using System.Text;
-using Calabonga.AspNetCore.AppDefinitions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
+﻿using Calabonga.AspNetCore.AppDefinitions;
 using Microsoft.OpenApi.Models;
-using PrintStatus.BLL;
 using PrintStatus.BLL.Helpers;
 using PrintStatus.BLL.Interfaces;
 using PrintStatus.BLL.Services;
-using PrintStatus.DAL.Connection;
 using PrintStatus.DAL.Repositories;
 using PrintStatus.DOM.Interfaces;
 
-namespace PrintStatus.API.Definitions.Commons
+namespace Api.Definitions.Commons
 {
-	/// <summary>
-	/// Common definition
-	/// </summary>
 	public class CommonDefinition : AppDefinition
 	{
 		public override void ConfigureServices(WebApplicationBuilder builder)
 		{
-			builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-								.AddEntityFrameworkStores<ApplicationDbContext>()
-								.AddDefaultTokenProviders();
+			builder.Services.AddAuthentication("Bearer")
+							//.AddJwtBearer("Bearer", options =>
+							//{
+							//	options.Authority = "https://localhost:5001";
 
-			builder.Services.AddAuthentication(options =>
-			{
-				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-			})
-				.AddJwtBearer(options =>
-				{
-					options.SaveToken = true;
-					options.RequireHttpsMetadata = false;
-					options.TokenValidationParameters = new TokenValidationParameters()
-					{
-						ValidateIssuer = true,
-						ValidateAudience = true,
-						ValidAudience = builder.Configuration["JWT: ValidAudience"],
-						ValidIssuer = builder.Configuration["JWT: ValidIssuer"],
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT: SecretKey"]))
-					};
-				});
-			builder.Services.AddAuthorization();
-			// Add services to the container.
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+							//	options.TokenValidationParameters = new TokenValidationParameters
+							//	{
+							//		ValidateAudience = false
+							//	};
+							//});
+							.AddJwtBearer("Bearer", options =>
+							{
+								options.Authority = "https://localhost:5001";
+								options.TokenValidationParameters.ValidateAudience = false;
+								options.MapInboundClaims = false;
+
+								options.TokenValidationParameters.ValidTypes = new[] { "at+jwt" };
+							});
+
 			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(swagger =>
 			{
 				swagger.SwaggerDoc("v1", new OpenApiInfo
@@ -83,9 +65,13 @@ namespace PrintStatus.API.Definitions.Commons
 					}
 				});
 			});
+
+
 			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 			Console.WriteLine(connectionString);
 			builder.Services.ConfigureDALServices(connectionString);
+
 
 			builder.Services.AddScoped<IBasePrinterManagementService, BasePrinterManagementService>();
 			builder.Services.AddScoped<IBasePrinterRepository, BasePrinterRepository>();
@@ -98,16 +84,16 @@ namespace PrintStatus.API.Definitions.Commons
 			builder.Services.AddScoped<IPrinterDataCollectorService, PrinterDataCollectorService>();
 			builder.Services.AddScoped<IPrintModelManagementService, PrintModelManagementService>();
 			builder.Services.AddScoped<IPrintModelRepository, PrintModelRepository>();
+			builder.Services.AddScoped<IBasePrinterUsersRepository, BasePrinterUserReposirory>();
 			builder.Services.AddScoped<ISnmpService, SnmpService>();
-			builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
-			builder.Services.AddScoped<IAccountService, AccountService>();
-			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddAutoMapper(typeof(AppMappingProfile));
+
+
 		}
+
 
 		public override void ConfigureApplication(WebApplication app)
 		{
-			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{
 				app.UseSwagger();
@@ -115,10 +101,9 @@ namespace PrintStatus.API.Definitions.Commons
 			}
 			app.UseAuthentication();
 			app.UseAuthorization();
-			app.UseStaticFiles();
 
 			app.UseHttpsRedirection();
-			app.MapControllers();
+			app.MapControllers().RequireAuthorization();
 		}
 	}
 }

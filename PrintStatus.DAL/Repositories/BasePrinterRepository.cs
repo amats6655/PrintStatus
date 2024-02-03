@@ -69,8 +69,8 @@ namespace PrintStatus.DAL.Repositories
 								.AsNoTracking()
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
-								.Where(p => p.LocationId == locationId && p.UserProfiles
-									.Any(u => u.IdentityId == identityUserId))
+								.Where(p => p.LocationId == locationId && p.PrinterUsers
+									.Any(u => u.UserId.Equals(identityUserId)))
 								.ToListAsync();
 				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 			}
@@ -90,8 +90,8 @@ namespace PrintStatus.DAL.Repositories
 								.AsNoTracking()
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
-								.Where(p => p.PrintModelId == modelId && p.UserProfiles
-									.Any(u => u.IdentityId == identityUserId))
+								.Where(p => p.PrintModelId == modelId && p.PrinterUsers
+									.Any(u => u.UserId.Equals(identityUserId)))
 								.ToListAsync();
 				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 
@@ -112,8 +112,8 @@ namespace PrintStatus.DAL.Repositories
 								.AsNoTracking()
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
-								.Where(p => p.UserProfiles
-									.Any(u => u.IdentityId == identityUserId))
+								.Where(p => p.PrinterUsers
+									.Any(u => u.UserId.Equals(identityUserId)))
 								.ToListAsync();
 				return RepositoryResult<IEnumerable<BasePrinter>>.Success(printers, $"Получено {printers.Count} записей");
 			}
@@ -128,7 +128,12 @@ namespace PrintStatus.DAL.Repositories
 			if (id <= 0) return new RepositoryResult<BasePrinter>().HandleException(new ArgumentNullException(nameof(id)));
 			try
 			{
-				var result = await _context.BasePrinters.FindAsync(id);
+				var result = await _context.BasePrinters
+								.Include(p => p.PrinterUsers)
+								.Include(p => p.Location)
+								.Include(p => p.PrintModel)
+								.Where(p => p.Id == id)
+								.FirstOrDefaultAsync();
 				if (result == null) return RepositoryResult<BasePrinter>.Failure(new List<string>(), $"Не удалось найти принтер с id = {id}");
 				return RepositoryResult<BasePrinter>.Success(result, "Принтер получен");
 			}
@@ -144,7 +149,7 @@ namespace PrintStatus.DAL.Repositories
 			try
 			{
 				var result = await _context.BasePrinters
-								.Include(p => p.UserProfiles)
+								.Include(p => p.PrinterUsers)
 								.Include(p => p.PrintModel)
 								.Include(p => p.Location)
 								.Where(p => p.SerialNumber
@@ -170,6 +175,7 @@ namespace PrintStatus.DAL.Repositories
 				printerExist.IpAddress = printer.IpAddress;
 				printerExist.SerialNumber = printer.SerialNumber;
 				printerExist.PrintModelId = printer.PrintModelId;
+				printerExist.PrinterUsers = printer.PrinterUsers;
 				_context.BasePrinters.Update(printer);
 				await _context.SaveChangesAsync();
 				return RepositoryResult<BasePrinter>.Success(printerExist, "Принтер обновлен");

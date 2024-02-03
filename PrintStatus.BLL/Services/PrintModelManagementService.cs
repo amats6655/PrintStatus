@@ -8,13 +8,13 @@ namespace PrintStatus.BLL.Services
 {
 	public class PrintModelManagementService(
 											IPrintModelRepository printModelRepo,
-											IMapper mapper,
-											IAccountService accountService
+											IMapper mapper
+											//IAccountService accountService
 											) : IPrintModelManagementService
 	{
 		private readonly IPrintModelRepository _printModelRepo = printModelRepo;
 		private readonly IMapper _mapper = mapper;
-		private readonly IAccountService _accountService = accountService;
+		//private readonly IAccountService _accountService = accountService;
 
 		public async Task<IServiceResult<PrintModelDTO>> AddAsync(string modelTitle)
 		{
@@ -62,9 +62,9 @@ namespace PrintStatus.BLL.Services
 		{
 			if (printerModelDTO == null) return ServiceResult<PrintModelDTO>.Failure("Неверный идентификатор модели");
 			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<PrintModelDTO>.Failure("Неавторизованная операция");
-			var userRoles = await _accountService.GetRolesAsync(identityUserId);
-			if (!userRoles.IsSuccess) return ServiceResult<PrintModelDTO>.Failure("Неудалось получить роль пользователя");
-			if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<PrintModelDTO>.Failure("Недостаточно прав для обновления модели");
+			//var userRoles = await _accountService.GetRolesAsync(identityUserId);
+			//if (!userRoles.IsSuccess) return ServiceResult<PrintModelDTO>.Failure("Неудалось получить роль пользователя");
+			//if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<PrintModelDTO>.Failure("Недостаточно прав для обновления модели");
 			PrintModel printer = _mapper.Map<PrintModel>(printerModelDTO);
 			var resultUpdate = await _printModelRepo.UpdateAsync(printer);
 			if (!resultUpdate.IsSuccess) return ServiceResult<PrintModelDTO>.Failure(resultUpdate.Message);

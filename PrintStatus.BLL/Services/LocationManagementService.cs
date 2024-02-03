@@ -7,16 +7,16 @@ using PrintStatus.DOM.Models;
 namespace PrintStatus.BLL.Services
 {
 	public class LocationManagementService(
-                                        ILocationRepository locationRepo,
-                                        IMapper mapper,
-                                        IAccountService accountService
-                                        ) : ILocationManagementService
+										ILocationRepository locationRepo,
+										IMapper mapper
+										//IAccountService accountService
+										) : ILocationManagementService
 	{
 		private readonly ILocationRepository _locationRepo = locationRepo;
 		private readonly IMapper _mapper = mapper;
-		private readonly IAccountService _accountService = accountService;
+		//private readonly IAccountService _accountService = accountService;
 
-        public async Task<IServiceResult<LocationDTO>> AddAsync(LocationDTO location)
+		public async Task<IServiceResult<LocationDTO>> AddAsync(LocationDTO location)
 		{
 			if (location == null) return ServiceResult<LocationDTO>.Failure("Неверный идентификатор местоположения");
 			var locationExist = await _locationRepo.GetByTitleAsync(location.Title);
@@ -63,9 +63,9 @@ namespace PrintStatus.BLL.Services
 		{
 			if (locationDTO == null) return ServiceResult<LocationDTO>.Failure("Неверный идентификатор местоположения");
 			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<LocationDTO>.Failure("Неавторизованная операция");
-			var userRoles = await _accountService.GetRolesAsync(identityUserId);
-			if (!userRoles.IsSuccess) return ServiceResult<LocationDTO>.Failure(userRoles.Message);
-			if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<LocationDTO>.Failure("Недостаточно прав для обновления местоположения");
+			//var userRoles = await _accountService.GetRolesAsync(identityUserId);
+			//if (!userRoles.IsSuccess) return ServiceResult<LocationDTO>.Failure(userRoles.Message);
+			//if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResult<LocationDTO>.Failure("Недостаточно прав для обновления местоположения");
 			Location location = _mapper.Map<Location>(locationDTO);
 			var resultUpdate = await _locationRepo.UpdateAsync(location);
 			if (!resultUpdate.IsSuccess) return ServiceResult<LocationDTO>.Failure(resultUpdate.Message);

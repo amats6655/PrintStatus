@@ -9,7 +9,7 @@ namespace PrintStatus.BLL.Services
 	{
 		private readonly IHistoryRepository _historyRepo = historyRepo;
 
-        public async Task<IServiceResult<bool>> AddHistory(History history)
+		public async Task<IServiceResult<bool>> AddHistory(History history)
 		{
 			if (history == null) return ServiceResult<bool>.Failure("Неверный идентификатор истории");
 			history.Date = DateTime.UtcNow;

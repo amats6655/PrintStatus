@@ -8,7 +8,9 @@ namespace PrintStatus.BLL.Helpers
 	{
 		public AppMappingProfile()
 		{
-			CreateMap<BasePrinter, PrinterDTO>().ReverseMap();
+			CreateMap<PrinterDTO, BasePrinter>().ReverseMap()
+				.ForMember(dest => dest.PrintModel, opt => opt.MapFrom(src => src.PrintModel.Title))
+				.ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location.Title));
 			CreateMap<PrintOid, OidDTO>().ReverseMap();
 			CreateMap<PrintModel, PrintModelDTO>().ReverseMap();
 		}

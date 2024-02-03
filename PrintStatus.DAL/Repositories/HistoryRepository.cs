@@ -80,7 +80,7 @@ namespace PrintStatus.DAL.Repositories
 				var histories = await _context.Histories
 								.AsNoTracking()
 								.Where(h => h.BasePrinterId == printerId
-										&& h.OidId == oidId)
+										&& h.PrintOidId == oidId)
 								.ToListAsync();
 				return RepositoryResult<IEnumerable<History>>.Success(histories, $"Получено {histories.Count} записей");
 			}

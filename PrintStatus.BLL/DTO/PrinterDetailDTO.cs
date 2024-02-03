@@ -2,7 +2,7 @@
 {
 	public class PrinterDetailDTO : PrinterDTO
 	{
-		public List<OidDTO> PrintConsumables { get; set; }
+		public List<OidDTO> PrintConsumables { get; set; } = [];
 
 	}
 }

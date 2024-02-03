@@ -1,1 +1,0 @@
-﻿@PrintStatus.API_HostAddress = https://localhost:7413GET {{PrintStatus.API_HostAddress}}/api/printers######POST {{PrintStatus.API_HostAddress}}/api/userContent-Type: application/json{    "Password": "ciscO15=!",    "UserName": "mats.aas"}###

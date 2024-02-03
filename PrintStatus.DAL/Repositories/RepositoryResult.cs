@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PrintStatus.DOM.Interfaces;
+﻿using PrintStatus.DOM.Interfaces;
 
 namespace PrintStatus.DAL.Repositories
 {

@@ -1,11 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PrintStatus.DOM.Models;
 
 namespace PrintStatus.DAL.Connection
 {
-	public class ApplicationDbContext : IdentityDbContext
+	public class ApplicationDbContext : DbContext
 	{
 		public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
 			: base(options)
@@ -15,12 +13,6 @@ namespace PrintStatus.DAL.Connection
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
-
-			builder.Entity<UserProfile>()
-				.HasOne<IdentityUser>()
-				.WithOne()
-				.HasForeignKey<UserProfile>(up => up.IdentityId)
-				.OnDelete(DeleteBehavior.Cascade);
 			builder.Entity<PrintModel>()
 				.HasMany(p => p.Printers)
 				.WithOne(p => p.PrintModel)
@@ -45,7 +37,7 @@ namespace PrintStatus.DAL.Connection
 		public DbSet<Location> Locations { get; set; }
 		public DbSet<PrintModel> PrintModels { get; set; }
 		public DbSet<PrintOid> Oids { get; set; }
-		public DbSet<UserProfile> UserProfiles { get; set; }
+		public DbSet<BasePrinterUser> BasePrinterUsers { get; set; }
 
 
 	}

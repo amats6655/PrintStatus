@@ -5,5 +5,5 @@ public class NewPrinterDTO
 	public string Title { get; set; }
 	public string IpAddress { get; set; }
 	public int LocationId { get; set; }
-	public string IdentityUserId {get; set;}
+	public string ApplicationUserId { get; set; }
 }
