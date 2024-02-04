@@ -3,13 +3,12 @@
 
 
 using Microsoft.AspNetCore.Identity;
+using PrintStatus.DOM.Models;
 
 namespace PrintStatus.AUTH.Models;
 
 // Add profile data for application users by adding properties to the ApplicationUser class
 public class ApplicationUser : IdentityUser
 {
-	//public List<BasePrinter> basePrinters {get; set;}
-	// public int UserProfileId { get; set; }
-	// public UserProfile UserProfile { get; set; }
+	public List<BasePrinterUser> PrinterUsers { get; set; }
 }

@@ -19,19 +19,22 @@ public class AuthDbContext : IdentityDbContext<ApplicationUser>
 		builder.Entity<BasePrinterUser>()
 			.HasKey(pu => new { pu.UserId, pu.BasePrinterId });
 
-		builder.Entity<PrinterUser>()
-			.HasOne(pu => pu.User)
+		builder.Entity<BasePrinterUser>()
+			.HasOne<ApplicationUser>()
 			.WithMany()
 			.HasForeignKey(pu => pu.UserId)
 			.IsRequired()
-			.OnDelete(DeleteBehavior.Cascade);
+			.OnDelete(DeleteBehavior.Cascade)
+			.HasPrincipalKey(au => au.Id); // Указываем, что связь идет через Id в ApplicationUser;
 
-		builder.Entity<PrinterUser>()
+		builder.Entity<BasePrinterUser>()
 			.HasOne(pu => pu.Printer)
-			.WithMany()
+			.WithMany(p => p.PrinterUsers)
 			.HasForeignKey(pu => pu.BasePrinterId)
 			.IsRequired()
 			.OnDelete(DeleteBehavior.Cascade);
+
+
 		builder.Entity<PrintModel>()
 			.HasMany(p => p.Printers)
 			.WithOne(p => p.PrintModel)

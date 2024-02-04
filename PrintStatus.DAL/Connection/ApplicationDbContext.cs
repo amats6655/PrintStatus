@@ -13,6 +13,19 @@ namespace PrintStatus.DAL.Connection
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
+
+			builder.Entity<BasePrinterUser>()
+				.HasKey(pu => new { pu.UserId, pu.BasePrinterId });
+
+
+			builder.Entity<BasePrinterUser>()
+				.HasOne(pu => pu.Printer)
+				.WithMany(p => p.PrinterUsers)
+				.HasForeignKey(pu => pu.BasePrinterId)
+				.IsRequired()
+				.OnDelete(DeleteBehavior.Cascade);
+
+
 			builder.Entity<PrintModel>()
 				.HasMany(p => p.Printers)
 				.WithOne(p => p.PrintModel)

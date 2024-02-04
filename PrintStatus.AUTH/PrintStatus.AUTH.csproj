@@ -6,10 +6,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Folder Include="keys\" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="6.3.8" />
+		<PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.0.0" />
+		<PackageReference Include="Duende.IdentityServer.EntityFramework" Version="7.0.0" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.1" />
 
@@ -23,10 +25,6 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Migrations\" />
 	</ItemGroup>
 
 	<ItemGroup>
