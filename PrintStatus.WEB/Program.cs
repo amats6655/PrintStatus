@@ -1,10 +1,22 @@
 using System.IdentityModel.Tokens.Jwt;
-
+using IdentityModel.Client;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+builder.Services.AddHttpClient();
+builder.Services.AddAccessTokenManagement(options =>
+{
+	options.Client.Clients.Add("identityserver", new ClientCredentialsTokenRequest
+	{
+		Address = "https://localhost:5001/connect/token",
+		ClientId = "web",
+		ClientSecret = "87D09D25-12F3-4B48-9CE5-F625E4FF7519",
+		Scope = "api"
+	});
+});
+
 builder.Services.AddAuthentication(options =>
 {
 	options.DefaultScheme = "Cookies";
@@ -14,7 +26,6 @@ builder.Services.AddAuthentication(options =>
 	.AddOpenIdConnect("oidc", options =>
 	{
 		options.Authority = "https://localhost:5001";
-
 		options.ClientId = "web";
 		options.ClientSecret = "87D09D25-12F3-4B48-9CE5-F625E4FF7519";
 		options.ResponseType = "code";
@@ -28,6 +39,7 @@ builder.Services.AddAuthentication(options =>
 		options.Scope.Add("offline_access");
 		options.GetClaimsFromUserInfoEndpoint = true;
 	});
+builder.Services.AddSingleton<TokenManager>();
 
 var app = builder.Build();
 

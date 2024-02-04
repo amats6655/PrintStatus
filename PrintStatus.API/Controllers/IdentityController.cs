@@ -13,7 +13,6 @@ namespace Api.Controllers
 		{
 			var claims = HttpContext.User.Claims;
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-			var result = "1111";
 			Console.WriteLine(userId);
 			return new JsonResult(from c in User.Claims select new { c.Type, c.Value });
 		}

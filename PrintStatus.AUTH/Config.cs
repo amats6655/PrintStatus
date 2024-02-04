@@ -39,7 +39,7 @@ public static class Config
 				ClientId = "web",
 				ClientSecrets = { new Secret("87D09D25-12F3-4B48-9CE5-F625E4FF7519".Sha256()) },
 
-				AllowedGrantTypes = GrantTypes.Code,
+				AllowedGrantTypes = GrantTypes.ClientCredentials,
 			
 				// where to redirect to after login
 				RedirectUris = { "https://localhost:5002/signin-oidc" },
@@ -47,13 +47,14 @@ public static class Config
 				// where to redirect to after logout
 				PostLogoutRedirectUris = { "https://localhost:5002/signout-callback-oidc" },
 
+				RefreshTokenUsage = TokenUsage.ReUse,
 				AllowOfflineAccess = true,
+
 
 				AllowedScopes = new List<string>
 				{
 					IdentityServerConstants.StandardScopes.OpenId,
 					IdentityServerConstants.StandardScopes.Profile,
-
 					"api"
 				}
 			},
