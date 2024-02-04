@@ -86,6 +86,8 @@ namespace Api.Definitions.Commons
 			builder.Services.AddScoped<IPrintModelRepository, PrintModelRepository>();
 			builder.Services.AddScoped<IBasePrinterUsersRepository, BasePrinterUserReposirory>();
 			builder.Services.AddScoped<ISnmpService, SnmpService>();
+			builder.Services.AddHostedService<PrinterDataCollectortHostedService>();
+			builder.Services.AddSingleton<IPollingStateService, PollingStateService>();
 			builder.Services.AddAutoMapper(typeof(AppMappingProfile));
 
 

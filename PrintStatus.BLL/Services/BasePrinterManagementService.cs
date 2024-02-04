@@ -58,14 +58,14 @@ namespace PrintStatus.BLL.Services
 				var resultAdd = await _printRepo.AddAsync(newPrinter);
 				if (!resultAdd.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultAdd.Message);
 
-				var addUserPrinterResult = await _printerUsersRepo.AddPrinterForUserAsync(printer.ApplicationUserId, resultAdd.Data.Id);
+				await _printerUsersRepo.AddPrinterForUserAsync(printer.ApplicationUserId, resultAdd.Data.Id);
 
 				newPrinterDTO = _mapper.Map<PrinterDTO>(resultAdd.Data);
 			}
 			else
 			{
-				//if (printerExist.Data.UserProfiles.Where(u => u.Id == userProfile.Data.Id).Any()) return ServiceResult<PrinterDTO>.Failure("Проверь свое зрение. Этот принтер у тебя уже есть!");
-				//printerExist.Data.UserProfiles.Add(userProfile.Data);
+				if (printerExist.Data.PrinterUsers.Where(u => u.UserId.Equals(printer.ApplicationUserId)).Any()) return ServiceResult<PrinterDTO>.Failure("Проверь свое зрение. Этот принтер у тебя уже есть!");
+				printerExist.Data.PrinterUsers.Add(new BasePrinterUser { BasePrinterId = printerExist.Data.Id, UserId = printer.ApplicationUserId });
 				var resultUpdate = await _printRepo.UpdateAsync(printerExist.Data);
 				if (!resultUpdate.IsSuccess) return ServiceResult<PrinterDTO>.Failure(resultUpdate.Message);
 				newPrinterDTO = _mapper.Map<PrinterDTO>(resultUpdate.Data);
@@ -73,19 +73,26 @@ namespace PrintStatus.BLL.Services
 			return ServiceResult<PrinterDTO>.Success(newPrinterDTO, "Принтер добавлен");
 		}
 
+		/// <summary>
+		/// Deletes a printer by its ID.
+		/// </summary>
+		/// <param name="id">The ID of the printer to delete.</param>
+		/// <param name="identityUserId">The identity user ID.</param>
+		/// <returns>A task that represents the asynchronous operation. The task result contains the service result indicating whether the printer was deleted successfully.</returns>
 		public async Task<IServiceResult<bool>> DeleteAsync(int id, string identityUserId)
 		{
 			if (id <= 0) return ServiceResult<bool>.Failure("Неверный идентификатор притентера");
 			if (string.IsNullOrEmpty(identityUserId)) return ServiceResult<bool>.Failure("Неавторизованная операция");
+
 			var printerExist = await _printRepo.GetByIdAsync(id);
 			if (!printerExist.IsSuccess) return ServiceResult<bool>.Failure(printerExist.Message);
-			//var userProfile = await _profileRepo.GetUserByIdentityId(identityUserId);
-			//if (!userProfile.IsSuccess) return ServiceResult<bool>.Failure(userProfile.Message);
 
-			//printerExist.Data.UserProfiles.Remove(userProfile.Data);
+			printerExist.Data.PrinterUsers.Remove(printerExist.Data.PrinterUsers.FirstOrDefault(u => u.UserId.Equals(identityUserId)));
+
 			var removePrinterFromUser = await _printRepo.UpdateAsync(printerExist.Data);
 			if (!removePrinterFromUser.IsSuccess) return ServiceResult<bool>.Failure(removePrinterFromUser.Message);
-			//if (removePrinterFromUser.Data.UserProfiles.Count >= 1) return ServiceResult<bool>.Success(true, "Принтер удален");
+
+			if (removePrinterFromUser.Data.PrinterUsers.Count >= 1) return ServiceResult<bool>.Success(true, "Принтер удален");
 			else
 			{
 				var resultDeletePrinter = await _printRepo.DeleteAsync(id);
