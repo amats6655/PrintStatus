@@ -12,14 +12,15 @@ internal static class HostingExtensions
 	public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
 	{
 		builder.Services.AddRazorPages();
+		var migrationsAssembly = typeof(Program).Assembly.GetName().Name;
+		string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 		builder.Services.AddDbContext<AuthDbContext>(options =>
-			options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+			options.UseNpgsql(connectionString));
 
 		builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 			.AddEntityFrameworkStores<AuthDbContext>()
 			.AddDefaultTokenProviders();
-
 		builder.Services
 			.AddIdentityServer(options =>
 			{
@@ -31,10 +32,22 @@ internal static class HostingExtensions
 				// see https://docs.duendesoftware.com/identityserver/v6/fundamentals/resources/
 				options.EmitStaticAudienceClaim = true;
 			})
+			.AddOperationalStore(options =>
+			{
+				options.ConfigureDbContext = builder =>
+					builder.UseNpgsql(connectionString,
+						sql => sql.MigrationsAssembly(migrationsAssembly));
+
+				// this enables automatic token cleanup. this is optional.
+				options.EnableTokenCleanup = true;
+				options.TokenCleanupInterval = 3600; // interval in seconds (default is 3600)
+			})
 			.AddInMemoryIdentityResources(Config.IdentityResources)
 			.AddInMemoryApiScopes(Config.ApiScopes)
 			.AddInMemoryClients(Config.Clients)
-			.AddAspNetIdentity<ApplicationUser>();
+			.AddAspNetIdentity<ApplicationUser>()
+			.AddInMemoryCaching();
+
 
 		//builder.Services.AddAuthentication()
 		//	.AddGoogle(options =>
