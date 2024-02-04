@@ -9,7 +9,7 @@ namespace PrintStatus.BLL.Services
 	{
 		private readonly IHistoryRepository _historyRepo = historyRepo;
 
-		public async Task<IServiceResult<bool>> AddHistory(History history)
+		public async Task<IServiceResult<bool>> AddHistoryAsync(History history)
 		{
 			if (history == null) return ServiceResult<bool>.Failure("Неверный идентификатор истории");
 			history.Date = DateTime.UtcNow;
@@ -18,7 +18,7 @@ namespace PrintStatus.BLL.Services
 			return ServiceResult<bool>.Success(true, "Добавлена запись в историю");
 		}
 
-		public async Task<IServiceResult<IEnumerable<History>>> GetAllByPrinterId(int printerId)
+		public async Task<IServiceResult<IEnumerable<History>>> GetAllByPrinterIdAsync(int printerId)
 		{
 			if (printerId <= 0) return ServiceResult<IEnumerable<History>>.Failure("Неверный идентификатор принтера");
 			var histories = await _historyRepo.GetPrinterHistoriesAsync(printerId);
@@ -26,14 +26,14 @@ namespace PrintStatus.BLL.Services
 			return ServiceResult<IEnumerable<History>>.Success(histories.Data, "История получена");
 		}
 
-		public async Task<IServiceResult<IEnumerable<History>>> GetAllHistories()
+		public async Task<IServiceResult<IEnumerable<History>>> GetAllHistoriesAsync()
 		{
 			var histories = await _historyRepo.GetAllAsync();
 			if (!histories.IsSuccess) return ServiceResult<IEnumerable<History>>.Failure(histories.Message);
 			return ServiceResult<IEnumerable<History>>.Success(histories.Data, "История получена");
 		}
 
-		public async Task<IServiceResult<History>> GetById(int id)
+		public async Task<IServiceResult<History>> GetByIdAsync(int id)
 		{
 			if (id <= 0) return ServiceResult<History>.Failure("Неверный идентификатор истории");
 			var history = await _historyRepo.GetByIdAsync(id);
