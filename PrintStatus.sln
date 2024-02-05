@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.WEB", "PrintSta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.AUTH", "PrintStatus.AUTH\PrintStatus.AUTH.csproj", "{7DA30EE8-5320-4CCE-8C99-0713DE999A63}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.API", "PrintStatus.Api\PrintStatus.API.csproj", "{D1670B8B-8AE6-4E1E-8528-C1C967C74CAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrintStatus.API", "PrintStatus.API\PrintStatus.API.csproj", "{D1670B8B-8AE6-4E1E-8528-C1C967C74CAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
