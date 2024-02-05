@@ -11,78 +11,103 @@ namespace Api.Controllers
 	[Authorize]
 	public class PrinterController : ControllerBase
 	{
-		private readonly IBasePrinterManagementService _printService;
+		private readonly IBasePrinterManagementService _basePrinterService;
 		public PrinterController(IBasePrinterManagementService printerManagementService)
 		{
-			_printService = printerManagementService;
+			_basePrinterService = printerManagementService;
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> Add(NewPrinterDTO printer)
+		{
+			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+			printer.ApplicationUserId = userId;
+			var result = await _basePrinterService.AddAsync(printer);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
+		}
+
+		[HttpDelete("{id}")]
+		public async Task<IActionResult> Delete(int id)
+		{
+			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+			var result = await _basePrinterService.DeleteAsync(id, userId);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
 
 		[HttpGet]
-		[Route("getAll")]
-		public async Task<IActionResult> Get()
+		public async Task<IActionResult> GetAll()
 		{
-			var claims = HttpContext.User.Claims;
-			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-			Console.WriteLine(userId);
-			var result = await _printService.GetAllByUserAsync(userId);
-			if (!result.Data.Any())
-			{
-				return Ok(new List<PrinterDTO>());
-			}
-			return new JsonResult(result);
+			var result = await _basePrinterService.GetAllAsync();
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
-
 
 		[HttpGet("{id}")]
-		public async Task<IActionResult> Get(int id)
+		public async Task<IActionResult> GetById(int id)
 		{
-			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-			var result = await _printService.GetByIdAsync(id);
-			if (!result.IsSuccess)
-			{
-				return BadRequest(result.Message);
-			}
-			return Ok(result.Data);
+			var result = await _basePrinterService.GetByIdAsync(id);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
 
-		[HttpGet()]
-		[Route("getDetail")]
-		public async Task<IActionResult> GetDetail(int printId)
+		[HttpGet("location/{locationId}")]
+		public async Task<IActionResult> GetAllByLocation(int locationId)
 		{
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-			var result = await _printService.GetDetailByIdAsync(printId, userId);
-			if (!result.IsSuccess) { return BadRequest(result.Message); }
-			return new JsonResult(result);
+			var result = await _basePrinterService.GetAllByLocationAsync(locationId, userId);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
 
-		[HttpPost]
-		public async Task<IActionResult> AddPrinter([FromBody] NewPrinterDTO value)
+		[HttpGet("model/{modelId}")]
+		public async Task<IActionResult> GetAllByModel(int modelId)
 		{
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-			value.ApplicationUserId = userId;
-			var result = await _printService.AddAsync(value);
-			if (!result.IsSuccess) return BadRequest(result.Message);
-			return Ok(result.Data);
+			var result = await _basePrinterService.GetAllByModelAsync(modelId, userId);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
 
-		[HttpPost]
-		[Route("delete")]
-		public async Task<IActionResult> DeletePrinter([FromBody] int id)
+		[HttpGet("user/{identityUserId}")]
+		public async Task<IActionResult> GetAllByUser()
 		{
+
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-			var result = await _printService.DeleteAsync(id, userId);
-			if (!result.IsSuccess) return BadRequest(result.Message);
-			return Ok(result.Message);
+			var result = await _basePrinterService.GetAllByUserAsync(userId);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
 
-		[HttpPost]
-		[Route("Update")]
-		public async Task<IActionResult> UpdatePrinter([FromBody] PrinterDTO printerDTO)
+		[HttpGet("detail/{id}")]
+		public async Task<IActionResult> GetDetailById(int id)
 		{
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-			var result = await _printService.UpdateAsync(printerDTO, userId);
-			if (!result.IsSuccess) return BadRequest(result.Message);
-			return new JsonResult(result);
+			var result = await _basePrinterService.GetDetailByIdAsync(id, userId);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
+		}
+
+
+
+		//TODO: Не трекается изменяемый принтер
+		[HttpPut]
+		public async Task<IActionResult> Update(PrinterDTO printerDTO)
+		{
+			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+			var result = await _basePrinterService.UpdateAsync(printerDTO, userId);
+			if (result.IsSuccess)
+				return Ok(result);
+			return BadRequest(result.Message);
 		}
 	}
 }
