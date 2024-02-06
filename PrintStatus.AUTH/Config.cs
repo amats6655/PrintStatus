@@ -39,7 +39,7 @@ public static class Config
 				ClientId = "web",
 				ClientSecrets = { new Secret("87D09D25-12F3-4B48-9CE5-F625E4FF7519".Sha256()) },
 
-				AllowedGrantTypes = GrantTypes.ClientCredentials,
+				AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
 			
 				// where to redirect to after login
 				RedirectUris = { "https://localhost:5002/signin-oidc" },

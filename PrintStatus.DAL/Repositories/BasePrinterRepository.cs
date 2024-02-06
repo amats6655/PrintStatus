@@ -173,9 +173,7 @@ namespace PrintStatus.DAL.Repositories
 			{
 				printerExist.Title = printer.Title;
 				printerExist.IpAddress = printer.IpAddress;
-				printerExist.SerialNumber = printer.SerialNumber;
 				printerExist.PrintModelId = printer.PrintModelId;
-				printerExist.PrinterUsers = printer.PrinterUsers;
 				_context.BasePrinters.Update(printer);
 				await _context.SaveChangesAsync();
 				return RepositoryResult<BasePrinter>.Success(printerExist, "Принтер обновлен");
