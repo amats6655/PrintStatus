@@ -28,14 +28,14 @@ namespace PrintStatus.WEB.Pages
 
 			var client = new HttpClient();
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-			var response = await client.GetAsync("https://localhost:6001/api/printer/getall");
+			var response = await client.GetAsync("https://localhost:6001/api/printer/user");
 
 			if (response.StatusCode == HttpStatusCode.Unauthorized)
 			{
 				// ≈сли получаем 401 ответ, это может означать, что токен истек. ѕопробуем обновить токен.
 				accessToken = await _tokenManager.RefreshTokenAsync();
 				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-				response = await client.GetAsync("https://localhost:6001/api/printer/getall");
+				response = await client.GetAsync("https://localhost:6001/api/printer/user");
 			}
 
 			var content = await response.Content.ReadAsStringAsync();

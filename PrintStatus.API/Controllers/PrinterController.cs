@@ -76,10 +76,9 @@ namespace Api.Controllers
 			return BadRequest(result.Message);
 		}
 
-		[HttpGet("user/{identityUserId}")]
+		[HttpGet("user/")]
 		public async Task<IActionResult> GetAllByUser()
 		{
-
 			var userId = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
 			var result = await _basePrinterService.GetAllByUserAsync(userId);
 			if (result.IsSuccess)

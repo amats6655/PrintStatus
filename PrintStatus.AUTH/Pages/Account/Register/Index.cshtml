@@ -1,0 +1,38 @@
+@page
+@model PrintStatus.AUTH.Pages.Register.Index
+
+<div class="login-page">
+    <div class="lead">
+        <h1>Register</h1>
+    </div>
+
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+<div class="col-sm-6">
+    <div class="card">
+        <div class="card-header">
+            <h2>Register</h2>
+        </div>
+
+        <div class="card-body">
+            <form asp-page="/Account/Register/Index" method="post">
+                <input type="hidden"  />
+
+                <div class="form-group">
+                    <label asp-for="RegisterModel.Email"></label>
+                    <input class="form-control" placeholder="Email" asp-for="RegisterModel.Email" autofocus>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RegisterModel.Password"></label>
+                    <input type="password" class="form-control" placeholder="Password" autocomplete="off" asp-for="RegisterModel.Password">
+                </div>
+                <div class="form-group">
+                    <label asp-for="RegisterModel.ConfirmPassword"></label>
+                    <input type="password" class="form-control" placeholder="Confirm Password" asp-for="RegisterModel.ConfirmPassword">
+                </div>
+                <button class="btn btn-primary" value="register">Register</button>
+            </form>
+        </div>
+    </div>
+</div>
