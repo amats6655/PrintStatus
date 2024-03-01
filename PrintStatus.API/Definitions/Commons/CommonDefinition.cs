@@ -3,11 +3,15 @@ using Microsoft.OpenApi.Models;
 using PrintStatus.BLL.Helpers;
 using PrintStatus.BLL.Interfaces;
 using PrintStatus.BLL.Services;
-using PrintStatus.DAL.Repositories;
-using PrintStatus.DOM.Interfaces;
 
 namespace Api.Definitions.Commons
 {
+	using Microsoft.EntityFrameworkCore.Migrations;
+	using PrintStatus.BLL.Services.Implementations;
+	using PrintStatus.DAL.Repositories.Implementations;
+	using PrintStatus.DAL.Repositories.Interfaces;
+	using PrintStatus.DOM.Models;
+
 	public class CommonDefinition : AppDefinition
 	{
 		public override void ConfigureServices(WebApplicationBuilder builder)
@@ -68,23 +72,20 @@ namespace Api.Definitions.Commons
 
 
 			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-			Console.WriteLine(connectionString);
-			builder.Services.ConfigureDALServices(connectionString);
-
-
+			
+			
+			
 			builder.Services.AddScoped<IBasePrinterManagementService, BasePrinterManagementService>();
-			builder.Services.AddScoped<IBasePrinterRepository, BasePrinterRepository>();
+			builder.Services.AddScoped<IGenericRepositoryInterface<Printer>, PrinterRepository>();
 			builder.Services.AddScoped<IHistoryManagementService, HistoryManagementService>();
 			builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 			builder.Services.AddScoped<ILocationManagementService, LocationManagementService>();
-			builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+			builder.Services.AddScoped<IGenericRepositoryInterface<Location>, LocationRepository>();
 			builder.Services.AddScoped<IPrintOidManagementService, OidManagementService>();
-			builder.Services.AddScoped<IPrintOidRepository, PrintOidRepository>();
+			builder.Services.AddScoped<IGenericRepositoryInterface<PrintOid>, PrintOidRepository>();
 			builder.Services.AddScoped<IPrinterDataCollectorService, PrinterDataCollectorService>();
 			builder.Services.AddScoped<IPrintModelManagementService, PrintModelManagementService>();
-			builder.Services.AddScoped<IPrintModelRepository, PrintModelRepository>();
-			builder.Services.AddScoped<IBasePrinterUsersRepository, BasePrinterUserReposirory>();
+			builder.Services.AddScoped<IGenericRepositoryInterface<PrintModel>, PrintModelRepository>();
 			builder.Services.AddScoped<ISnmpService, SnmpService>();
 			builder.Services.AddHostedService<PrinterDataCollectortHostedService>();
 			builder.Services.AddSingleton<IPollingStateService, PollingStateService>();

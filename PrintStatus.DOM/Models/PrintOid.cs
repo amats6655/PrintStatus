@@ -1,12 +1,14 @@
-﻿namespace PrintStatus.DOM.Models
+﻿namespace PrintStatus.DOM.Models;
+
+using System.Text.Json.Serialization;
+
+public class PrintOid : BaseModel
 {
-	public class PrintOid
-	{
-		public int Id { get; set; }
-		public required string Title { get; set; }
-		public required string Value { get; set; }
-		public int PollingDate { get; set; }
-		public List<PrintModel>? Models { get; set; } = [];
-		public List<History>? Histories { get; set; } = [];
-	}
+	public string? Value { get; set; }
+	public int PollingRate { get; set; }
+	[JsonIgnore]
+	public List<PrintModel>? PrintModels { get; set; }
+	[JsonIgnore]
+	public List<Journal>? Journals { get; set; }
 }
+

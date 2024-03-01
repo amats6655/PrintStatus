@@ -1,9 +1,10 @@
-﻿namespace PrintStatus.DOM.Models
+﻿namespace PrintStatus.DOM.Models;
+
+using System.Text.Json.Serialization;
+
+public class Location : BaseModel
 {
-	public class Location
-	{
-		public int Id { get; set; }
-		public required string Title { get; set; }
-		public List<BasePrinter>? Printers { get; set; }
-	}
+	[JsonIgnore]
+	public List<Printer>? Printers { get; set; }
 }
+

@@ -1,19 +1,19 @@
-﻿namespace PrintStatus.DOM.Models
-{
-	public class PrintModel
-	{
-		public int Id { get; set; }
-		public required string Title { get; set; }
-		public bool IsColor { get; set; }
-		public List<PrintOid>? Oids { get; set; }
-		public List<BasePrinter>? Printers { get; set; }
-		public ConsumableCalcType ConsumableCalcType { get; set; }
-	}
+﻿namespace PrintStatus.DOM.Models;
 
-	public enum ConsumableCalcType
-	{
-		LowLevel,
-		PageCount,
-		Percent
-	}
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
+public class PrintModel : BaseModel
+{
+	[Required]
+	public bool IsColor { get; set; }
+	[Required]
+	public CalcType? CalcType { get; set; }
+	public int CalcTypeId { get; set; }
+	public string? Image { get; set; }
+	[JsonIgnore]
+	public List<Printer>? Printers { get; set; }
+	[JsonIgnore]
+	public List<PrintOid>? PrintOids { get; set; }
 }
+

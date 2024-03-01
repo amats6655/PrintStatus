@@ -1,18 +1,17 @@
-﻿using AutoMapper;
-using PrintStatus.BLL.DTO;
-using PrintStatus.DOM.Models;
+﻿namespace PrintStatus.BLL.Helpers;
 
-namespace PrintStatus.BLL.Helpers
+using AutoMapper;
+using DOM.Models;
+using DTO;
+
+public class AppMappingProfile : Profile
 {
-	public class AppMappingProfile : Profile
+	public AppMappingProfile()
 	{
-		public AppMappingProfile()
-		{
-			CreateMap<PrinterDTO, BasePrinter>().ReverseMap()
-				.ForMember(dest => dest.PrintModel, opt => opt.MapFrom(src => src.PrintModel.Title))
-				.ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location.Title));
-			CreateMap<PrintOid, OidDTO>().ReverseMap();
-			CreateMap<PrintModel, PrintModelDTO>().ReverseMap();
-		}
+		CreateMap<PrinterDTO, Printer>().ReverseMap()
+			.ForMember(dest => dest.PrintModel, opt => opt.MapFrom(src => src.PrintModel.Name))
+			.ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location.Name));
+		CreateMap<PrintOid, OidDTO>().ReverseMap();
+		CreateMap<PrintModel, PrintModelDTO>().ReverseMap();
 	}
 }
