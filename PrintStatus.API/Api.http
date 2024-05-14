@@ -1,0 +1,15 @@
+@Api_HostAddress = https://localhost:6001
+
+GET {{Api_HostAddress}}/api/Printer/all/
+Accept: application/json
+
+###
+
+GET {{Api_HostAddress}}/identity
+
+###
+
+GET {{Api_HostAddress}}/identity
+
+###
+POST {{Api_HostAddress}}/api/Printer/add

@@ -1,0 +1,63 @@
+# Скомпилированные бинарные и промежуточные файлы
+bin/
+obj/
+out/
+
+# Файлы настроек Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+
+# Файлы конфигурации и тайные ключи
+#appsettings.*.json
+*.config
+
+# Файлы миграции базы данных
+[Mm]igrations/
+
+# Сгенерированные файлы для публикации
+publish/
+
+# Папки NUGET 
+packages/
+*.nupkg
+global.json
+NuGetFallbackFolder/
+
+# Папка MSTest
+TestResults/
+
+# Файлы ReSharper
+*.DotSettings.user
+
+# Файлы Rider
+.idea/
+
+# Различные файлы и папки, часто используемые в проектах ASP.NET
+*.swp
+*.bak
+*.tmp
+*.mdf
+*.ldf
+*.ldb
+Thumbs.db
+
+# Файлы журналов
+*.log
+*.trx
+*.log
+*.sqlite
+
+# Файлы пакетов
+*.tgz
+*.rar
+
+# Файлы и папки, созданные при выполнении команд dotnet
+project.lock.json
+project.fragment.lock.json
+artifacts/
+/PrintStatus.DAL/Migrations/
+cspell.json
