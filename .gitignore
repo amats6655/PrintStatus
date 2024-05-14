@@ -12,7 +12,7 @@ out/
 *.userprefs
 
 # Файлы конфигурации и тайные ключи
-#appsettings.*.json
+appsettings.*.json
 *.config
 
 # Файлы миграции базы данных
