@@ -174,13 +174,18 @@ public class PrinterService : IPrinterService
 		};
 		return ServiceResponse<PrinterDetailDTO>.Success(detailPrinter, "Данные получены");
 	}
-	public async Task<IServiceResponse<Printer>> UpdateAsync(Printer model, int userId)
+	public async Task<IServiceResponse<Printer>> UpdateAsync(UpdatePrinterDTO model, int userId)
 	{
-		//var userRoles = await _accountService.GetRolesAsync(identityUserId);
-		//if (!userRoles.IsSuccess) return ServiceResponse<PrinterDTO>.Failure("Неудалось получить роль пользователя");
-		//if (!userRoles.Data.Any(r => r.Equals("Администратор"))) return ServiceResponse<PrinterDTO>.Failure("Недостаточно прав для обновления принтера");
-		var resultUpdate = await _printRepo.UpdateAsync(model);
-		if (!resultUpdate.IsSuccess) return ServiceResponse<Printer>.Failure(resultUpdate.Message);
+		var printerExist = await _printRepo.GetByIdAsync(model.Id);
+		if (printerExist.Errors.Any()) return ServiceResponse<Printer>.Error(printerExist.Message);
+		if (!printerExist.IsSuccess) return ServiceResponse<Printer>.Failure(printerExist.Message);
+		
+		printerExist.Data.Name = model.Name;
+		printerExist.Data.LocationId = model.LocationId;
+		printerExist.Data.IpAddress = model.IpAddress!;
+		var resultUpdate = await _printRepo.UpdateAsync(printerExist.Data);
+		
+		if (!resultUpdate.IsSuccess) return ServiceResponse<Printer>.Error(resultUpdate.Message);
 		return ServiceResponse<Printer>.Success(resultUpdate.Data, "Принтер обновлен");
 	}
 }
