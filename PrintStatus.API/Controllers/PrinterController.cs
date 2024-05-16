@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL;
+using PrintStatus.BLL.DTO;
+using PrintStatus.BLL.Helpers;
 using PrintStatus.BLL.Services.Interfaces;
 using PrintStatus.DOM.Models;
 

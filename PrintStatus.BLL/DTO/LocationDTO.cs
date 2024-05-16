@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PrintStatus.BLL;
+namespace PrintStatus.BLL.DTO;
 
 public class LocationDTO
 {

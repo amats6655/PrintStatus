@@ -1,3 +1,5 @@
+using PrintStatus.BLL.DTO;
+
 namespace PrintStatus.BLL.Services.Interfaces;
 
 using Helpers;

@@ -7,7 +7,6 @@ using DOM.Models;
 using DTO;
 using Helpers;
 using Interfaces;
-using DAL.Repositories.Implementations;
 
 public class LocationService : ILocationService
 {
@@ -37,8 +36,7 @@ public class LocationService : ILocationService
 		if (!resultDelete.IsSuccess) return ServiceResponse<bool>.Failure(resultDelete.Message);
 		return ServiceResponse<bool>.Success(true, resultDelete.Message);
 	}
-
-
+	
 	public async Task<IServiceResponse<List<Location>>> GetAllAsync()
 	{
 		var locations = await _locationRepo.GetAllAsync();

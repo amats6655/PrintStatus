@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using PrintStatus.BLL;
+using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Services.Interfaces;
 using PrintStatus.DOM.Models;
 
