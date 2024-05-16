@@ -5,6 +5,7 @@ using Helpers;
 public class ServiceResponse<T> : IServiceResponse<T>
 {
 	public bool IsSuccess { get; set; }
+	public bool HasErrors { get; set; } = false;
 	public T Data { get; set; }
 	public string? Message { get; set; }
 
@@ -15,5 +16,9 @@ public class ServiceResponse<T> : IServiceResponse<T>
 	public static ServiceResponse<T> Failure(string message)
 	{
 		return new ServiceResponse<T> { IsSuccess = false, Message = message };
+	}
+	public static ServiceResponse<T> Error(string message)
+	{
+		return new ServiceResponse<T> { HasErrors = true, IsSuccess = false, Message = message };
 	}
 }

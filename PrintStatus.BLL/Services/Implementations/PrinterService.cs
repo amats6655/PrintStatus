@@ -42,104 +42,122 @@ public class PrinterService : IPrinterService
 	public async Task<IServiceResponse<bool>> InsertAsync(NewPrinterDTO printer, int userId)
 	{
 		var currentUser = await _userAccount.GetUserById(userId);
+		if (currentUser.Data == null) return ServiceResponse<bool>.Error("Пользователь не найден");
+
 		var snmpResult = await _snmpService.GetModelAndSerialNumAsync(printer.IpAddress);
-		if (!snmpResult.IsSuccess) return ServiceResponse<bool>.Failure(snmpResult.Message);
-		
+		if (!snmpResult.IsSuccess) return ServiceResponse<bool>.Error(snmpResult.Message);
+
 		var printerExist = await _printRepo.GetBySerialNumberAsync(snmpResult.Data["SerialNumber"]);
-		if (printerExist.Errors.Any()) return ServiceResponse<bool>.Failure(printerExist.Message);
+		if (printerExist.Errors.Any()) return ServiceResponse<bool>.Error(printerExist.Message);
 
 		if (!printerExist.IsSuccess)
 		{
 			var printModel = await _modelService.InsertAsync(snmpResult.Data["Model"]);
-			if (!printModel.IsSuccess) return ServiceResponse<bool>.Failure(printModel.Message);
+			if (printModel.HasErrors || !printModel.IsSuccess) return ServiceResponse<bool>.Error(printModel.Message);
 
-			var newPrinter = new Printer()
+			var newPrinter = new Printer
 			{
 				IpAddress = printer.IpAddress,
 				Name = printer.Name,
 				PrintModelId = printModel.Data.Id,
 				SerialNumber = snmpResult.Data["SerialNumber"],
-				
 				LocationId = printer.LocationId,
-				ApplicationUsers = new List<ApplicationUser>(){currentUser.Data}
+				ApplicationUsers = new List<ApplicationUser> { currentUser.Data }
 			};
 
 			var resultAdd = await _printRepo.InsertAsync(newPrinter);
-			if (!resultAdd.IsSuccess) return ServiceResponse<bool>.Failure(resultAdd.Message);
+			if (resultAdd.Errors.Any() || !resultAdd.IsSuccess) return ServiceResponse<bool>.Error(resultAdd.Message);
 		}
 		else
 		{
-			if (printerExist.Data.ApplicationUsers!.Any(u => u.Id == printer.ApplicationUserId)) return ServiceResponse<bool>.Failure("У тебя уже есть этот принтер");
-			printerExist.Data.ApplicationUsers!.Add(currentUser.Data);
+			if (printerExist.Data.ApplicationUsers.Any(u => u.Id == userId)) return ServiceResponse<bool>.Failure("У тебя уже есть этот принтер");
+
+			printerExist.Data.ApplicationUsers.Add(currentUser.Data);
 			var resultUpdate = await _printRepo.UpdateAsync(printerExist.Data);
-			if (!resultUpdate.IsSuccess) return ServiceResponse<bool>.Failure(resultUpdate.Message);
+			if (resultUpdate.Errors.Any() || !resultUpdate.IsSuccess) return ServiceResponse<bool>.Error(resultUpdate.Message);
 		}
+
 		return ServiceResponse<bool>.Success(true, "Принтер добавлен");
 	}
+
 	
 	public async Task<IServiceResponse<bool>> DeleteAsync(int id, int userId)
 	{
-		if (userId <= 0) return ServiceResponse<bool>.Failure("Неавторизованная операция");
-
 		var printerExist = await _printRepo.GetByIdAsync(id);
-		if (!printerExist.IsSuccess) return ServiceResponse<bool>.Failure(printerExist.Message);
+		if (printerExist.Errors.Any()) 
+			return ServiceResponse<bool>.Error(printerExist.Message);
+		if (!printerExist.IsSuccess)
+			return ServiceResponse<bool>.Failure(printerExist.Message);
 
-		printerExist.Data.ApplicationUsers!.Remove(printerExist.Data.ApplicationUsers.FirstOrDefault(u => u.Id == userId));
+		if (printerExist.Data.ApplicationUsers!.Find(u => u.Id == userId) == null)
+			return ServiceResponse<bool>.Failure("У тебя нет этого принтера");
 
+		printerExist.Data.ApplicationUsers!.Remove(printerExist.Data.ApplicationUsers.Find(u => u.Id == userId));
 		var removePrinterFromUser = await _printRepo.UpdateAsync(printerExist.Data);
-		if (!removePrinterFromUser.IsSuccess) return ServiceResponse<bool>.Failure(removePrinterFromUser.Message);
 
-		if (removePrinterFromUser.Data.ApplicationUsers!.Count >= 1) return ServiceResponse<bool>.Success(true, "Принтер удален");
-		else
-		{
-			var resultDeletePrinter = await _printRepo.DeleteByIdAsync(id);
-			if (!resultDeletePrinter.IsSuccess) return ServiceResponse<bool>.Failure(resultDeletePrinter.Message);
-			return ServiceResponse<bool>.Success(true, resultDeletePrinter.Message);
-		}
+		if (removePrinterFromUser.Errors.Any()) 
+			return ServiceResponse<bool>.Error(removePrinterFromUser.Message);
+		if (!removePrinterFromUser.IsSuccess) 
+			return ServiceResponse<bool>.Failure(removePrinterFromUser.Message);
+		if (removePrinterFromUser.Data.ApplicationUsers!.Count >= 1) 
+			return ServiceResponse<bool>.Success(true, "Принтер удален");
+		
+		var resultDeletePrinter = await _printRepo.DeleteByIdAsync(id);
+		if (resultDeletePrinter.Errors.Any())
+			return ServiceResponse<bool>.Error(resultDeletePrinter.Message);
+		if (!resultDeletePrinter.IsSuccess) 
+			return ServiceResponse<bool>.Failure(resultDeletePrinter.Message);
+		return ServiceResponse<bool>.Success(true, resultDeletePrinter.Message);
 	}
 
 	public async Task<IServiceResponse<List<Printer>>> GetAllAsync()
 	{
 		var printers = await _printRepo.GetAllAsync();
-		if (!printers.IsSuccess) return ServiceResponse<List<Printer>>.Failure(printers.Message);
+		if (!printers.IsSuccess) 
+			return ServiceResponse<List<Printer>>.Error(printers.Message);
 		return ServiceResponse<List<Printer>>.Success(printers.Data, "Принтеры получены");
 	}
 
 	public async Task<IServiceResponse<List<Printer>>> GetAllByLocationAsync(int locationId, int userId)
 	{
-		// if (userId <= 0) return ServiceResponse<List<Printer>>.Failure("Неавторизованная операция");
 		var printers = await _printRepo.GetAllByLocationAsync(locationId);
-		if (!printers.IsSuccess) return ServiceResponse<List<Printer>>.Failure(printers.Message);
+		if (!printers.IsSuccess) 
+			return ServiceResponse<List<Printer>>.Error(printers.Message);
 		return ServiceResponse<List<Printer>>.Success(printers.Data, "Принтеры получены");
 	}
 
 	public async Task<IServiceResponse<List<Printer>>> GetAllByModelAsync(int modelId, int userId)
 	{
-		// if (string.IsNullOrEmpty(identityUserId)) return ServiceResponse<IEnumerable<PrinterDTO>>.Failure("Неавторизованная операция");
 		var printers = await _printRepo.GetAllByModelAsync(modelId);
-		if (!printers.IsSuccess) return ServiceResponse<List<Printer>>.Failure(printers.Message);
+		if (!printers.IsSuccess) 
+			return ServiceResponse<List<Printer>>.Error(printers.Message);
 		return ServiceResponse<List<Printer>>.Success(printers.Data, "Принтеры получены");
 	}
 
 	public async Task<IServiceResponse<List<Printer>>> GetAllByUserAsync(int userId)
 	{
 		var printers = await _printRepo.GetAllByUserAsync(userId);
-		if (!printers.IsSuccess) return ServiceResponse<List<Printer>>.Failure(printers.Message);
+		if (!printers.IsSuccess) 
+			return ServiceResponse<List<Printer>>.Error(printers.Message);
 		return ServiceResponse<List<Printer>>.Success(printers.Data, printers.Message);
 	}
 
 	public async Task<IServiceResponse<Printer>> GetByIdAsync(int id)
 	{
 		var printer = await _printRepo.GetByIdAsync(id);
+		if(printer.Errors.Any()) return ServiceResponse<Printer>.Error(printer.Message);
 		if (!printer.IsSuccess) return ServiceResponse<Printer>.Failure(printer.Message);
 		return ServiceResponse<Printer>.Success(printer.Data, printer.Message);
 	}
 
-	public async Task<IServiceResponse<PrinterDetailDTO>> GetDetailByIdAsync(int id, int userId)
+	public async Task<IServiceResponse<PrinterDetailDTO>> GetDetailByIdAsync(int id)
 	{
 		var printer = await _printRepo.GetByIdAsync(id);
+		if (printer.Errors.Any()) return ServiceResponse<PrinterDetailDTO>.Error(printer.Message);
 		if (!printer.IsSuccess) return ServiceResponse<PrinterDetailDTO>.Failure(printer.Message);
+		
 		var oids = await _consumableService.GetAllByModelAsync(printer.Data.PrintModelId);
+		if(oids.HasErrors) ServiceResponse<PrinterDetailDTO>.Error(oids.Message);
 		if (!oids.IsSuccess) return ServiceResponse<PrinterDetailDTO>.Failure(oids.Message);
 
 		var oidsForSNMP = new List<Variable>();
@@ -148,7 +166,9 @@ public class PrinterService : IPrinterService
 			oidsForSNMP.Add(new(new ObjectIdentifier(oid.PrintOid!.Value!)));
 		}
 		var oidsResult = await _snmpService.GetOidsAsync(printer.Data.IpAddress, oidsForSNMP);
+		if (oidsResult.HasErrors) return ServiceResponse<PrinterDetailDTO>.Error(oidsResult.Message);
 		if (!oidsResult.IsSuccess) return ServiceResponse<PrinterDetailDTO>.Failure(oidsResult.Message);
+		
 		var oidDict = oids.Data.ToDictionary(o => o.PrintOid!.Value!, o => o.Name!);
 		var oidsDTO = new List<PrintOidDTO>();
 		foreach (var result in oidsResult.Data)
