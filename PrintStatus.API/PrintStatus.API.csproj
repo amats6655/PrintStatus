@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,15 +21,15 @@
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
     <PackageReference Include="Serilog.Formatting.Compact" Version="2.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PrintStatus.BLL\PrintStatus.BLL.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Definitions\Commons\" />
   </ItemGroup>
 
   <ItemGroup>

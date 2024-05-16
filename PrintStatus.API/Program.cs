@@ -56,7 +56,22 @@ try
 		{
 			{ jwtSecurityScheme, Array.Empty<string>() }
 		});
-
+		
+		setup.SwaggerDoc("v1", new OpenApiInfo
+		{
+			Version = "v1",
+			Title = "PrintStatus.API",
+			Description = "Сервис для сбора статистики принтеров с помощью SNMP",
+			Contact = new OpenApiContact
+			{
+				Name = "Telegram",
+				Url = new Uri("https://t.me/amats")
+			}
+		});
+		
+		
+		var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+		setup.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 	});
 
 	string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
