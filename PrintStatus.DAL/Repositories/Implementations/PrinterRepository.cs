@@ -10,9 +10,11 @@ public class PrinterRepository(AppDbContext _context) : IPrinterRepository
 {
 	public async Task<IRepositoryResponse<Printer>> InsertAsync(Printer printer)
 	{
-		if (printer == null) return new RepositoryResponse<Printer>().HandleException(new ArgumentNullException(nameof(printer)));
+		if (printer == null) return RepositoryResponse<Printer>.Failure(new List<string> { "" }, "Принтер не может быть null");
+
 		var printerExist = await _context.Printers.AnyAsync(p => p.SerialNumber == printer.SerialNumber);
-		if (printerExist) return RepositoryResponse<Printer>.Failure([], $"Принтер {printer.SerialNumber} уже существует");
+		if (printerExist) return RepositoryResponse<Printer>.Failure(new List<string> { "" }, $"Принтер {printer.SerialNumber} уже существует");
+
 		try
 		{
 			await _context.Printers.AddAsync(printer);
@@ -24,6 +26,7 @@ public class PrinterRepository(AppDbContext _context) : IPrinterRepository
 			return new RepositoryResponse<Printer>().HandleException(ex);
 		}
 	}
+
 
 	public async Task<IRepositoryResponse<bool>> DeleteByIdAsync(int id)
 	{
@@ -67,7 +70,6 @@ public class PrinterRepository(AppDbContext _context) : IPrinterRepository
 			var result = await _context.Printers
 							.Include(p => p.Location)
 							.Include(p => p.PrintModel)
-							.Include(u => u.ApplicationUsers)
 							.Where(p => p.Id == id)
 							.FirstOrDefaultAsync();
 			if (result == null) return RepositoryResponse<Printer>.Failure([], $"Не удалось найти принтер с id = {id}");
@@ -162,17 +164,11 @@ public class PrinterRepository(AppDbContext _context) : IPrinterRepository
 	public async Task<IRepositoryResponse<Printer>> UpdateAsync(Printer printer)
 	{
 		if (printer == null) return new RepositoryResponse<Printer>().HandleException(new ArgumentNullException(nameof(printer)));
-		var printerExist = await _context.Printers.Include(u => u.ApplicationUsers).FirstOrDefaultAsync(_ => _.Id == printer.Id);
-		if (printerExist == null) return RepositoryResponse<Printer>.Failure(new List<string> { "" }, "Не найден изменяемый объект");
 		try
 		{
-			printerExist.Name = printer.Name;
-			printerExist.IpAddress = printer.IpAddress;
-			printerExist.PrintModelId = printer.PrintModelId;
-			printerExist.ApplicationUsers = printer.ApplicationUsers;
 			_context.Printers.Update(printer);
 			await _context.SaveChangesAsync();
-			return RepositoryResponse<Printer>.Success(printerExist, "Принтер обновлен");
+			return RepositoryResponse<Printer>.Success(printer, "Принтер обновлен");
 		}
 		catch (Exception ex)
 		{
