@@ -36,7 +36,7 @@ public class PrintOidService : IPrintOidService
 		IRepositoryResponse<PrintOid> newOid;
 		if (oidExist.IsSuccess)
 		{
-			oidExist.Data.Name += $" + {oid.Name}";
+			oidExist.Data.Name += $"\n + {oid.Name}";
 			newOid = await _printOidRepository.UpdateAsync(oidExist.Data);
 			if (!newOid.IsSuccess) return ServiceResponse<bool>.Failure("Не удалось добавить данный Oid");
 		}
