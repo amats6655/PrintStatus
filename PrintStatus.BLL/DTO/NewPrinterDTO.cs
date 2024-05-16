@@ -17,7 +17,4 @@ public class NewPrinterDTO
 	
 	[Required]
 	public int LocationId { get; set; }
-	
-	[Required]
-	public int ApplicationUserId { get; set; }
 }
