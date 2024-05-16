@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Services.Interfaces;
@@ -7,6 +8,7 @@ namespace PrintStatus.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ConsumableController : ControllerBase
 {
 	private readonly IConsumableService _consumableService;

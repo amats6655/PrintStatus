@@ -7,7 +7,6 @@ namespace PrintStatus.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[AllowAnonymous]
 public class AuthenticationController(IUserAccount accountInterface) : ControllerBase
 {
 	[HttpPost("register")]
@@ -35,6 +34,7 @@ public class AuthenticationController(IUserAccount accountInterface) : Controlle
 	}
 	
 	[HttpGet("users")]
+	[Authorize(Roles = "Admin")]
 	public async Task<IActionResult> GetUsersAsync()
 	{
 		var users = await accountInterface.GetUsers();
@@ -43,6 +43,7 @@ public class AuthenticationController(IUserAccount accountInterface) : Controlle
 	}
 	
 	[HttpPut("update-user")]
+	[Authorize(Roles = "Admin")]
 	public async Task<IActionResult> UpdateUser(ManageUser manageUser)
 	{
 		var result = await accountInterface.UpdateUser(manageUser);
@@ -58,6 +59,7 @@ public class AuthenticationController(IUserAccount accountInterface) : Controlle
 	}
 	
 	[HttpDelete("delete-user/{id}")]
+	[Authorize(Roles = "Admin")]
 	public async Task<IActionResult> DeleteUser(int id)
 	{
 		var result = await accountInterface.DeleteUser(id);

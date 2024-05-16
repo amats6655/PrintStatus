@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL.DTO;
 using PrintStatus.BLL.Services.Interfaces;
@@ -8,6 +9,7 @@ namespace PrintStatus.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class LocationController : ControllerBase
 {
 	private readonly ILocationService _locationService;

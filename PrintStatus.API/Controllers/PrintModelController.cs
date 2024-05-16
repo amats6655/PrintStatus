@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL.Services.Interfaces;
@@ -8,7 +9,8 @@ namespace PrintStatus.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PrintModelController : ControllerBase
+    [Authorize]
+    public class PrintModelController(IPrintModelService printModelService) : ControllerBase
     {
         private readonly IPrintModelService _printModelService;
 

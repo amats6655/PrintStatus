@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PrintStatus.BLL.DTO;
@@ -9,6 +10,7 @@ namespace PrintStatus.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PrintOidController : ControllerBase
     {
         private readonly IPrintOidService _printOidService;

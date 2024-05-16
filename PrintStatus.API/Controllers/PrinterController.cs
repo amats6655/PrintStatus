@@ -12,6 +12,7 @@ namespace PrintStatus.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PrinterController : ControllerBase
     {
         private readonly IPrinterService _printerService;
